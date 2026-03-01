@@ -1,6 +1,6 @@
 import { fmtDateTime, renderNav, showPageError, toast } from "./ui.js";
 import { getActiveNovelId, getData } from "./store.js";
-import { localizeDocumentText, t } from "./i18n.js";
+import { localizeDocumentText, t, translateText } from "./i18n.js";
 
 let serviceRunning = false;
 let logTimer = null;
@@ -331,6 +331,7 @@ function renderCaptureLogs(logs) {
   if (!wrap) return;
   if (!Array.isArray(logs) || logs.length === 0) {
     wrap.innerHTML = `<div class="capture-log-item"><strong>暂无上传记录</strong><span>当脚本开始上报章节后，这里会显示时间、章回和字数。</span></div>`;
+    localizeDocumentText(document);
     return;
   }
   wrap.innerHTML = logs
@@ -385,9 +386,9 @@ async function copyScript() {
   const copyBtn = document.getElementById("copyScriptBtn");
   if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
     await navigator.clipboard.writeText(text);
-    if (copyBtn) copyBtn.textContent = "已复制";
+    if (copyBtn) copyBtn.textContent = translateText("已复制");
     window.setTimeout(() => {
-      if (copyBtn) copyBtn.textContent = "复制代码";
+      if (copyBtn) copyBtn.textContent = translateText("复制代码");
     }, 1200);
     toast(t("toast.copied"));
     return;
@@ -399,9 +400,9 @@ async function copyScript() {
   ta.select();
   document.execCommand("copy");
   document.body.removeChild(ta);
-  if (copyBtn) copyBtn.textContent = "已复制";
+  if (copyBtn) copyBtn.textContent = translateText("已复制");
   window.setTimeout(() => {
-    if (copyBtn) copyBtn.textContent = "复制代码";
+    if (copyBtn) copyBtn.textContent = translateText("复制代码");
   }, 1200);
   toast(t("toast.copied"));
 }

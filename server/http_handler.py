@@ -1,4 +1,3 @@
-import tempfile
 import zipfile
 
 from .services import *  # noqa: F401,F403
@@ -123,6 +122,15 @@ class Handler(BaseHTTPRequestHandler):
                 conn.close()
                 self.send_json({"error": "novel not found"}, 404)
                 return
+            chapters = conn.execute(
+                """
+                SELECT chapter_num,title,text_file_path,audio_file_path
+                FROM chapters
+                WHERE novel_id=?
+                ORDER BY chapter_num ASC
+                """,
+                (novel_id,),
+            ).fetchall()
             conn.close()
 
             english_dir = str(row["english_dir"] or "").strip()
@@ -130,47 +138,49 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"error": "novel english_dir missing"}, 400)
                 return
 
-            novel_root = NOVEL_DIR / english_dir
-            text_dir = novel_root / "text"
-            audio_dir = novel_root / "audio"
-            if not text_dir.exists() and not audio_dir.exists():
-                self.send_json({"error": "novel text/audio directory not found"}, 404)
+            def resolve_storage_path(raw_path: str) -> Path | None:
+                text = str(raw_path or "").strip()
+                if not text:
+                    return None
+                path = Path(text)
+                if not path.is_absolute():
+                    path = ROOT_DIR / path
+                try:
+                    return path.resolve()
+                except Exception:
+                    return None
+
+            bundle_entries: list[tuple[Path, Path]] = []
+            for chapter in chapters:
+                chapter_num = int(chapter["chapter_num"] or 0)
+                title = str(chapter["title"] or "")
+                text_name = safe_chapter_file_name(chapter_num, title)
+                audio_name = text_name.replace(".txt", ".flac")
+
+                text_src = resolve_storage_path(str(chapter["text_file_path"] or ""))
+                if text_src and text_src.exists() and text_src.is_file():
+                    arc = Path(english_dir) / "text" / text_name
+                    bundle_entries.append((text_src, arc))
+
+                audio_src = resolve_storage_path(str(chapter["audio_file_path"] or ""))
+                if audio_src and audio_src.exists() and audio_src.is_file():
+                    arc = Path(english_dir) / "audio" / audio_name
+                    bundle_entries.append((audio_src, arc))
+
+            if not bundle_entries:
+                self.send_json({"error": "novel text/audio files not found"}, 404)
                 return
 
-            safe_name = re.sub(
-                r"[^A-Za-z0-9._-]+", "_", str(row["name"] or "novel")
-            ).strip("._")
-            if not safe_name:
-                safe_name = "novel"
-            out_name = f"{safe_name}-{english_dir}.zip"
+            out_name = f"{english_dir}-{datetime.now().strftime('%Y-%m-%d_%H%M')}.zip"
+            output_dir = ROOT_DIR / "output"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            zip_path = output_dir / out_name
 
-            with tempfile.NamedTemporaryFile(
-                prefix="novel-bundle-", suffix=".zip", delete=False
-            ) as fp:
-                tmp_zip_path = Path(fp.name)
+            with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                for src_path, arcname in bundle_entries:
+                    zf.write(src_path, arcname=str(arcname))
 
-            try:
-                with zipfile.ZipFile(
-                    tmp_zip_path, "w", compression=zipfile.ZIP_DEFLATED
-                ) as zf:
-                    for base in (text_dir, audio_dir):
-                        if not base.exists() or not base.is_dir():
-                            continue
-                        for file_path in base.rglob("*"):
-                            if not file_path.is_file():
-                                continue
-                            arcname = Path(english_dir) / file_path.relative_to(
-                                novel_root
-                            )
-                            zf.write(file_path, arcname=str(arcname))
-
-                body = tmp_zip_path.read_bytes()
-            finally:
-                try:
-                    if tmp_zip_path.exists():
-                        tmp_zip_path.unlink()
-                except Exception:
-                    pass
+            body = zip_path.read_bytes()
 
             self.send_response(200)
             self.send_header("Content-Type", "application/zip")

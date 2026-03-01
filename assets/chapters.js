@@ -302,7 +302,7 @@ function renderJsonViewMode() {
   const canEdit = jsonViewMode === "juben" || jsonViewMode === "roles";
   editBtn.classList.toggle("hidden", !canEdit);
   saveBtn.classList.toggle("hidden", !jsonViewEditing);
-  editBtn.textContent = jsonViewEditing ? "取消编辑" : "编辑";
+  editBtn.textContent = jsonViewEditing ? t("common.cancelEdit") : t("common.edit");
   preview.classList.toggle("hidden", jsonViewEditing);
   editor.classList.toggle("hidden", !jsonViewEditing);
 
@@ -351,6 +351,17 @@ function renderJsonViewMode() {
   });
   preview.textContent = lines.join("\n\n");
   localizeDocumentText(document);
+}
+
+function applyAudioScheduleLabels() {
+  const label = document.getElementById("audioScheduleLabel");
+  if (label) label.textContent = t("chapter.audioExecution");
+  const select = document.getElementById("audioScheduleMode");
+  if (!select) return;
+  const immediateOpt = select.querySelector('option[value="immediate"]');
+  const scheduledOpt = select.querySelector('option[value="scheduled"]');
+  if (immediateOpt) immediateOpt.textContent = t("common.immediate");
+  if (scheduledOpt) scheduledOpt.textContent = t("common.scheduled");
 }
 
 async function saveJsonViewEdit() {
@@ -674,6 +685,7 @@ function openChapterModal(mode) {
 
 async function init() {
   renderNav();
+  applyAudioScheduleLabels();
   document.getElementById("downloadAudioBtn").disabled = true;
   setGenerateAudioVisible(false);
   resetChapterAudioPlayer();

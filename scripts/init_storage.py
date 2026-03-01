@@ -13,7 +13,7 @@ DB_PATH = DATA_DIR / "novels.db"
 PROMPTS_DIR = ROOT_DIR / "prompts"
 WORKFLOWS_DIR = ROOT_DIR / "workflows"
 SYSTEM_PROMPT_FILE = PROMPTS_DIR / "xhz_system_prompt.txt"
-SYSTEM_PROMPT_NAME = "古本水浒传系统提示词"
+SYSTEM_PROMPT_NAME = "系统提示词"
 SYSTEM_PROMPT_DESC = "系统内置"
 DEFAULT_SYSTEM_PROMPT_CONTENT = "请将章回文本拆分为 role_list 与 juben 的 JSON 结构。"
 SYSTEM_WORKFLOW_FILE = PROMPTS_DIR / "xhz_system_workflow_api.txt"
@@ -252,6 +252,37 @@ def init_schema(conn: sqlite3.Connection) -> None:
 def seed_core_data(conn: sqlite3.Connection) -> None:
     system_prompt_content = load_system_prompt_content()
     system_workflow_json_text = load_system_workflow_json_text()
+    legacy_names = ["古本水浒传系统提示词", "古本水浒传系统Prompt"]
+    current_row = conn.execute(
+        "SELECT id FROM json_prompts WHERE name=?",
+        (SYSTEM_PROMPT_NAME,),
+    ).fetchone()
+    for legacy in legacy_names:
+        if legacy == SYSTEM_PROMPT_NAME:
+            continue
+        legacy_row = conn.execute(
+            "SELECT id FROM json_prompts WHERE name=?",
+            (legacy,),
+        ).fetchone()
+        if not legacy_row:
+            continue
+        legacy_id = legacy_row[0]
+        if current_row:
+            current_id = current_row[0]
+            conn.execute(
+                "UPDATE novels SET prompt_id=? WHERE prompt_id=?",
+                (current_id, legacy_id),
+            )
+            conn.execute("DELETE FROM json_prompts WHERE id=?", (legacy_id,))
+        else:
+            conn.execute(
+                "UPDATE json_prompts SET name=?,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                (SYSTEM_PROMPT_NAME, legacy_id),
+            )
+            current_row = conn.execute(
+                "SELECT id FROM json_prompts WHERE name=?",
+                (SYSTEM_PROMPT_NAME,),
+            ).fetchone()
     conn.execute(
         """
         INSERT INTO json_prompts (name, prompt_type, description, content)

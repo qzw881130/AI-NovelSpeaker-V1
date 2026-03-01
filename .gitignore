@@ -15,3 +15,7 @@ data/*.db-*
 # Keep currently tracked novel files, ignore new ones later.
 # (tracked files remain tracked even when matched here)
 novel/**
+
+# Keep output directory, ignore generated bundles/files
+output/*
+!output/.gitkeep

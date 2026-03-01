@@ -11,6 +11,7 @@ let refreshTimer = null;
 let clockTimer = null;
 const taskDetails = new Map();
 const loadingDetails = new Set();
+const batchOpenStates = new Map();
 const REFRESH_INTERVAL_KEY = "ai_novel_json_tasks_refresh_interval";
 const REFRESH_VALUES = ["0", "5", "20", "60"];
 
@@ -72,21 +73,35 @@ function progressWidth(task) {
   return Math.max(0, Math.min(100, base));
 }
 
+function batchKey(batch) {
+  const primary = batch.id ?? batch.batchId ?? batch.batchIndex;
+  if (primary != null && primary !== "") return String(primary);
+  return `${batch.updatedAt || ""}:${batch.inputWordCount || 0}`;
+}
+
 function renderBatchDetails(taskId) {
   const data = taskDetails.get(String(taskId));
   if (!data) return "";
   const batches = Array.isArray(data.batches) ? data.batches : [];
+  const openSet = batchOpenStates.get(String(taskId));
+  const updatedLabel = t("common.updatedAt");
+  const wordsLabel = t("字数");
+  const inputLabel = t("输入文本");
+  const llmLabel = t("LLM返回");
+  const parsedJsonLabel = t("解析JSON");
   if (!batches.length) {
     return `<div class="batch-panel"><p class="meta">当前任务没有分批记录。</p></div>`;
   }
   return `<div class="batch-panel">${batches
     .map((b) => {
+      const key = batchKey(b);
+      const shouldOpen = openSet ? openSet.has(key) : b.status === "failed";
       const err = b.errorMessage ? ` · 失败: ${escapeHtml(b.errorMessage)}` : "";
-      return `<details ${b.status === "failed" ? "open" : ""}><summary>批次 ${b.batchIndex} · ${b.status} · 字数 ${fmtNumber(b.inputWordCount || 0)}${err}</summary><p class="meta">更新时间 ${formatServerTime(
+      return `<details data-batch-detail="1" data-task-id="${taskId}" data-batch-key="${escapeHtml(key)}" ${shouldOpen ? "open" : ""}><summary>批次 ${b.batchIndex} · ${b.status} · ${wordsLabel} ${fmtNumber(b.inputWordCount || 0)}${err}</summary><p class="meta">${updatedLabel} ${formatServerTime(
         b.updatedAt
-      )}</p><div class="batch-block"><strong>输入文本</strong><pre>${escapeHtml(b.inputText || "")}</pre></div><div class="batch-block"><strong>LLM返回</strong><pre>${escapeHtml(
+      )}</p><div class="batch-block"><strong>${inputLabel}</strong><pre>${escapeHtml(b.inputText || "")}</pre></div><div class="batch-block"><strong>${llmLabel}</strong><pre>${escapeHtml(
         b.llmResponseText || ""
-      )}</pre></div><div class="batch-block"><strong>解析JSON</strong><pre>${escapeHtml(b.parsedJsonText || "")}</pre></div></details>`;
+      )}</pre></div><div class="batch-block"><strong>${parsedJsonLabel}</strong><pre>${escapeHtml(b.parsedJsonText || "")}</pre></div></details>`;
     })
     .join("")}</div>`;
 }
@@ -95,6 +110,13 @@ function render() {
   const promptMap = new Map(currentData.prompts.map((p) => [String(p.id), p.name]));
   const activeNovel = document.getElementById("taskNovelSelect").value;
   const status = document.getElementById("taskStatusSelect").value;
+  const createdAtLabel = t("common.createdAt");
+  const updatedAtLabel = t("common.updatedAt");
+  const elapsedLabel = t("common.elapsed");
+  const chapterLabel = t("章节");
+  const wordsLabel = t("字数");
+  const promptLabel = t("提示词");
+  const batchesLabel = t("分批");
 
   const list = currentData.jsonTasks.filter((t) => {
     const hitNovel = activeNovel ? String(t.novelId) === String(activeNovel) : true;
@@ -114,14 +136,21 @@ function render() {
       (task) => `
       <article class="queue-card">
         <div class="queue-head">
-          <h3>#${fmtNumber(task.id)} · ${task.title}</h3>
+          <h3><span class="audio-task-id">#${fmtNumber(task.id)}</span> ${escapeHtml(task.title || "-")}</h3>
           <strong class="status ${task.status}">${statusLabel(task.status)}</strong>
         </div>
-        <p class="meta">${task.novelName || ""} · 章节 ${task.chapter} · 字数 ${fmtNumber(task.wordCount || 0)} · 提示词 ${promptName(promptMap, task.promptId)}${
+        <div class="meta json-meta-row">
+          <span class="json-meta-pill"><i class="json-meta-dot"></i>${escapeHtml(task.novelName || "-")}</span>
+          <span class="json-meta-pill"><i class="json-meta-dot"></i>${chapterLabel} ${fmtNumber(task.chapter || 0)}</span>
+          <span class="json-meta-pill"><i class="json-meta-dot"></i>${wordsLabel} ${fmtNumber(task.wordCount || 0)}</span>
+          <span class="json-meta-pill"><i class="json-meta-dot"></i>${promptLabel} ${escapeHtml(promptName(promptMap, task.promptId))}</span>
+          <span class="json-meta-pill"><i class="json-meta-dot"></i>${batchesLabel} ${fmtNumber(task.batchDone || 0)}/${fmtNumber(task.batchTotal || 0)}</span>
+        </div>
+        <p class="meta json-meta-time">${createdAtLabel} ${formatServerTime(task.createdAt || task.updatedAt)} · ${updatedAtLabel} ${formatServerTime(task.updatedAt)}${
           task.status === "running"
-            ? ` · 已用时 <span data-elapsed-from="${task.updatedAt}">${formatElapsedFrom(task.updatedAt)}</span>`
+            ? ` · ${elapsedLabel} <span data-elapsed-from="${task.updatedAt}">${formatElapsedFrom(task.updatedAt)}</span>`
             : ""
-        } · 分批 ${fmtNumber(task.batchDone || 0)}/${fmtNumber(task.batchTotal || 0)} · 创建时间 ${formatServerTime(task.createdAt || task.updatedAt)} · 更新时间 ${formatServerTime(task.updatedAt)}</p>
+        }</p>
         ${task.status === "failed" && task.errorMessage ? `<p class="task-error">${escapeHtml(task.errorMessage)}</p>` : ""}
         ${
           task.status === "failed"
@@ -147,6 +176,21 @@ function render() {
   document.querySelectorAll("[data-task-action]").forEach((el) => {
     el.addEventListener("click", () => onTaskAction(el.dataset.taskAction, el.dataset.taskId));
   });
+  document.querySelectorAll("details[data-batch-detail]").forEach((el) => {
+    el.addEventListener("toggle", () => {
+      const taskId = String(el.getAttribute("data-task-id") || "");
+      const key = String(el.getAttribute("data-batch-key") || "");
+      if (!taskId || !key) return;
+      let openSet = batchOpenStates.get(taskId);
+      if (!openSet) {
+        openSet = new Set();
+        batchOpenStates.set(taskId, openSet);
+      }
+      if (el.open) openSet.add(key);
+      else openSet.delete(key);
+      if (!openSet.size) batchOpenStates.delete(taskId);
+    });
+  });
   updateElapsedLabels();
   localizeDocumentText(document);
 }
@@ -169,6 +213,7 @@ async function onTaskAction(action, id) {
       if (!window.confirm(t("confirm.deleteTask", { title: task.title }))) return;
       await deleteJsonTask(task.id);
       taskDetails.delete(String(task.id));
+      batchOpenStates.delete(String(task.id));
       toast(t("toast.deleted"));
       await reload();
       return;
@@ -203,6 +248,22 @@ async function reload() {
   const alive = new Set((currentData.jsonTasks || []).map((x) => String(x.id)));
   for (const key of Array.from(taskDetails.keys())) {
     if (!alive.has(key)) taskDetails.delete(key);
+  }
+  for (const key of Array.from(batchOpenStates.keys())) {
+    if (!alive.has(key)) batchOpenStates.delete(key);
+  }
+  const expandedTaskIds = Array.from(taskDetails.keys()).filter((key) => alive.has(key));
+  if (expandedTaskIds.length) {
+    await Promise.all(
+      expandedTaskIds.map(async (key) => {
+        try {
+          const detail = await fetchJsonTaskDetail(Number(key));
+          taskDetails.set(key, detail);
+        } catch {
+          // keep existing cached details when refresh fails
+        }
+      })
+    );
   }
   renderNovelSelector();
   document.getElementById("taskNovelSelect").value = novelValue;

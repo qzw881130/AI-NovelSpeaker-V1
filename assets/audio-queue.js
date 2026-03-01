@@ -88,14 +88,31 @@ function bindElapsedTimer() {
 function taskElapsedText(task) {
   const started = parseServerTime(task.comfyStartedAt || "");
   if (!started) return "";
+  const elapsedLabel = t("common.elapsed");
   if (task.status === "running") {
-    return `已用时 <span data-elapsed-start="${escapeHtml(task.comfyStartedAt || task.updatedAt || "")}">0:00:00</span>`;
+    return `${elapsedLabel} <span data-elapsed-start="${escapeHtml(task.comfyStartedAt || task.updatedAt || "")}">0:00:00</span>`;
   }
   const finished = parseServerTime(task.comfyFinishedAt || "");
   if (finished) {
-    return `已用时 ${formatDuration(finished.getTime() - started.getTime())}`;
+    return `${elapsedLabel} ${formatDuration(finished.getTime() - started.getTime())}`;
   }
-  return `已用时 ${formatDuration(Date.now() - started.getTime())}`;
+  return `${elapsedLabel} ${formatDuration(Date.now() - started.getTime())}`;
+}
+
+function cancelAllResultText(result) {
+  const count = Number(result?.cancelledCount || 0);
+  const queueCleared = Boolean(result?.queueCleared);
+  const interrupted = Boolean(result?.interrupted);
+  const parts = [];
+  if (count > 0) {
+    parts.push(t("audio.cancel.cancelledCount", { count: fmtNumber(count) }));
+  }
+  if (queueCleared) parts.push(t("audio.cancel.queueCleared"));
+  if (interrupted) parts.push(t("audio.cancel.interrupted"));
+  if (!parts.length) {
+    return count > 0 ? t("audio.cancel.done") : t("audio.cancel.noop");
+  }
+  return parts.join(" · ");
 }
 
 function render() {
@@ -125,11 +142,18 @@ function render() {
       (task) => `
       <article class="queue-card">
         <div class="queue-head">
-          <h3>${task.title}</h3>
+          <h3><span class="audio-task-id">#${fmtNumber(task.id)}</span> ${escapeHtml(task.title || "-")}</h3>
           <strong class="status ${task.status}">${statusLabel(task.status)}</strong>
         </div>
-        <p class="meta">${task.novelName || ""} · #${task.chapter} ${task.title ? `· ${escapeHtml(task.title)}` : ""} · ${fmtNumber(task.wordCount || 0)} · ${workflowName(workflowMap, task.workflowId)} · Comfy ${task.comfyStatus || "-"} · ${task.scheduledAt ? formatDateTime(task.scheduledAt) : t("common.immediate")}</p>
-        <p class="meta">创建 ${formatDateTime(task.createdAt)}${taskElapsedText(task) ? ` · ${taskElapsedText(task)}` : ""}</p>
+        <div class="meta audio-meta-row">
+          <span class="audio-meta-pill"><i class="audio-meta-dot"></i>${escapeHtml(task.novelName || "-")}</span>
+          <span class="audio-meta-pill"><i class="audio-meta-dot"></i>#${fmtNumber(task.chapter)}</span>
+          <span class="audio-meta-pill"><i class="audio-meta-dot"></i>${t("字数")} ${fmtNumber(task.wordCount || 0)}</span>
+          <span class="audio-meta-pill"><i class="audio-meta-dot"></i>${escapeHtml(workflowName(workflowMap, task.workflowId))}</span>
+          <span class="audio-meta-pill"><i class="audio-meta-dot"></i>Comfy ${escapeHtml(task.comfyStatus || "-")}</span>
+          <span class="audio-meta-pill"><i class="audio-meta-dot"></i>${task.scheduledAt ? formatDateTime(task.scheduledAt) : t("common.immediate")}</span>
+        </div>
+        <p class="meta audio-meta-time">${t("common.createdAt")} ${formatDateTime(task.createdAt)}${taskElapsedText(task) ? ` · ${taskElapsedText(task)}` : ""}</p>
         ${task.status === "failed" && task.errorMessage ? `<p class="task-error">${escapeHtml(task.errorMessage)}</p>` : ""}
         ${task.status !== "running" ? `<div class="card-actions"><button class="ghost-btn" data-audio-action="delete" data-task-id="${task.id}">${t("common.delete")}</button></div>` : ""}
         <div class="progress ${task.status === "running" ? "is-running-animated" : ""} ${task.status === "failed" ? "is-failed" : ""}"><i style="width:${progressWidth(task)}%"></i></div>
@@ -192,7 +216,7 @@ function bindEvents() {
   document.getElementById("cancelAllAudioTasksBtn").addEventListener("click", async () => {
     if (!window.confirm(t("confirm.cancelAllAudio"))) return;
     const res = await cancelAllAudioTasks();
-    toast(String(res.message || t("common.status.cancelled")));
+    toast(cancelAllResultText(res));
     await reload();
   });
 
