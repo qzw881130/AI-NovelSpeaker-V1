@@ -75,7 +75,7 @@ function getConnectHost(serverUrl) {
   try {
     return new URL(serverUrl).hostname;
   } catch {
-    return "192.168.50.3";
+    return "127.0.0.1";
   }
 }
 
