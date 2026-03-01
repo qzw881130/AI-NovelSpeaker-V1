@@ -316,6 +316,14 @@ def seed_core_data(conn: sqlite3.Connection) -> None:
             (name, author, english_dir, p_id, w_id),
         )
 
+    conn.execute(
+        """
+        INSERT INTO app_settings (setting_key,setting_value,updated_at)
+        VALUES ('comfy_url', 'http://127.0.0.1:8188', CURRENT_TIMESTAMP)
+        ON CONFLICT(setting_key) DO NOTHING
+        """
+    )
+
 
 def ensure_novel_dirs(conn: sqlite3.Connection) -> list[str]:
     rows = conn.execute("SELECT english_dir FROM novels ORDER BY id ASC").fetchall()

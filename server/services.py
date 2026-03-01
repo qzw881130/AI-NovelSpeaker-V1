@@ -391,6 +391,7 @@ def fetch_audio_tasks(conn: sqlite3.Connection) -> list[dict]:
 def fetch_settings(conn: sqlite3.Connection) -> dict:
     rows = conn.execute("SELECT setting_key,setting_value FROM app_settings").fetchall()
     kv = {str(r["setting_key"]): str(r["setting_value"]) for r in rows}
+    comfy_url = str(kv.get("comfy_url", "") or "").strip() or "http://127.0.0.1:8188"
 
     try:
         batch_max_chars = int(kv.get("llm_batch_max_chars", "3500"))
@@ -409,7 +410,7 @@ def fetch_settings(conn: sqlite3.Connection) -> dict:
         "batchMaxChars": batch_max_chars,
     }
     return {
-        "comfyUrl": kv.get("comfy_url", "http://127.0.0.1:8188"),
+        "comfyUrl": comfy_url,
         "proxyUrl": kv.get("proxy_url", ""),
         "llm": llm,
     }

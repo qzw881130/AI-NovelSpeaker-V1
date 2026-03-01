@@ -8,6 +8,10 @@ __pycache__/
 # macOS
 .DS_Store
 
+# Local runtime database
+data/*.db
+data/*.db-*
+
 # Keep currently tracked novel files, ignore new ones later.
 # (tracked files remain tracked even when matched here)
 novel/**

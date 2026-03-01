@@ -7,7 +7,7 @@ let cache = {
   jsonTasks: [],
   audioTasks: [],
   settings: {
-    comfyUrl: "",
+    comfyUrl: "http://127.0.0.1:8188",
     proxyUrl: "",
     llm: {
       provider: "grok",
