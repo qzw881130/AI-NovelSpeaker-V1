@@ -23,7 +23,6 @@
 - `prompts/xhz_system_prompt.txt`：システムプロンプト
 - `prompts/xhz_system_workflow_api.txt`：システムワークフロー（JSON テキスト）
 - `debug/qwen3_tts_workflow_debug.json`：ComfyUI デバッグ用ワークフロー
-- `debug/novel_to_audio_workflow.json`：小説→音声サンプル
 - `output/`：ローカル出力ディレクトリ（ディレクトリは追跡、生成物は無視）
 
 ## 起動

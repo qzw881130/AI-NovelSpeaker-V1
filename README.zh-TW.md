@@ -23,7 +23,6 @@
 - `prompts/xhz_system_prompt.txt`：系統提示詞檔案
 - `prompts/xhz_system_workflow_api.txt`：系統工作流檔案（JSON 文字）
 - `debug/qwen3_tts_workflow_debug.json`：ComfyUI 除錯工作流
-- `debug/novel_to_audio_workflow.json`：小說轉有聲樣例
 - `output/`：本地匯出目錄（保留目錄，忽略生成檔）
 
 ## 啟動

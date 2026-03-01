@@ -23,7 +23,6 @@
 - `prompts/xhz_system_prompt.txt`: 시스템 프롬프트 파일
 - `prompts/xhz_system_workflow_api.txt`: 시스템 워크플로 파일 (JSON 텍스트)
 - `debug/qwen3_tts_workflow_debug.json`: ComfyUI 디버그 워크플로
-- `debug/novel_to_audio_workflow.json`: 소설→오디오 샘플
 - `output/`: 로컬 내보내기 디렉터리 (디렉터리는 추적, 생성 파일은 무시)
 
 ## 실행 방법

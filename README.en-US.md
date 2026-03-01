@@ -23,7 +23,6 @@ Local-first multi-novel management and audio generation toolkit (SQLite + local 
 - `prompts/xhz_system_prompt.txt`: system prompt file
 - `prompts/xhz_system_workflow_api.txt`: system workflow file (JSON text)
 - `debug/qwen3_tts_workflow_debug.json`: ComfyUI debug workflow
-- `debug/novel_to_audio_workflow.json`: novel-to-audio workflow sample
 - `output/`: local export directory (directory is tracked, generated files are ignored)
 
 ## Startup

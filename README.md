@@ -23,7 +23,6 @@
 - `prompts/xhz_system_prompt.txt`：系统提示词文件
 - `prompts/xhz_system_workflow_api.txt`：系统工作流文件（文本 JSON）
 - `debug/qwen3_tts_workflow_debug.json`：ComfyUI 调试用 Qwen3 TTS 工作流
-- `debug/novel_to_audio_workflow.json`：小说转有声工作流样例
 - `output/`：本地导出目录（保留目录本身，忽略目录内生成文件）
 
 ## 平台安装与启动
@@ -118,7 +117,6 @@ python3 app_server.py
 ### 调试工作流文件
 
 - 推荐调试文件：`debug/qwen3_tts_workflow_debug.json`
-- 参考样例文件：`debug/novel_to_audio_workflow.json`
 
 ### 需要的第三方节点（仅列第三方）
 
