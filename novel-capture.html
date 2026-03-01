@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI NovelSpeaker V1 - 小说抓取</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="main-nav" id="mainNav"></aside>
+      <main class="page">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">数据抓取助手</p>
+            <h1>小说抓取脚本生成</h1>
+          </div>
+          <div class="header-actions"></div>
+        </header>
+
+        <section class="panel form-panel">
+          <h2>来源网站</h2>
+          <p class="caption">小说来源网站：<a href="https://www.99csw.com/" target="_blank" rel="noopener noreferrer">https://www.99csw.com/</a></p>
+        </section>
+
+        <section class="panel form-panel">
+          <h2>操作流程</h2>
+          <ol class="steps">
+            <li>准备参数，获得 JS 代码。</li>
+            <li>step1: 打开小说列表页，例如 <code>https://www.99csw.com/book/5744/201995.htm</code></li>
+            <li>step2: 获得链接中的 bookId，例如 <code>https://www.99csw.com/book/5744/201995.htm</code> 中的 <code>5744</code></li>
+            <li>step3: 获得第一回链接的 pageId，例如 <code>https://www.99csw.com/book/5744/201876.htm</code> 中 <code>201876</code></li>
+            <li>step4: 获得最后一回链接的 pageId，例如 <code>https://www.99csw.com/book/5744/201995.htm</code> 中 <code>201995</code></li>
+            <li>step5: 打开小说第一回页面，例如 <code>https://www.99csw.com/book/5744/201995.htm</code></li>
+            <li>打开 Chrome 开发者工具，切换到 Sources -&gt; Snippets -&gt; New snippet -&gt; 粘贴 JS 代码 -&gt; 右击脚本运行。</li>
+            <li>上报成功后，页面会跳到下一回，右击脚本运行再次上报，循环往复。</li>
+          </ol>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>参数配置</h2>
+          </div>
+          <div class="form-grid">
+            <label class="full">小说
+              <select id="captureNovelId"></select>
+            </label>
+            <label>服务地址
+              <div class="service-row">
+                <input id="captureServer" value="http://192.168.50.3:8889" />
+                <span id="serviceStatus" class="service-status offline">未启动</span>
+                <button id="serviceToggleBtn" class="ghost-btn" type="button">启动服务</button>
+              </div>
+            </label>
+            <label>书籍ID
+              <input id="captureBookId" type="number" value="5744" min="1" />
+            </label>
+            <label>第一回页ID
+              <input id="captureFirstId" type="number" value="201876" min="1" />
+            </label>
+            <label>最后一回页ID
+              <input id="captureLastId" type="number" value="201995" min="1" />
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="capture-split">
+            <article class="capture-col">
+              <div class="panel-head">
+                <h2>生成脚本</h2>
+                <div class="toolbar">
+                  <button class="primary-btn" id="copyScriptBtn" type="button">复制代码</button>
+                </div>
+              </div>
+              <pre id="scriptOutput" class="code-block"></pre>
+            </article>
+            <article class="capture-col">
+              <div class="panel-head">
+                <h2>上传日志</h2>
+                <span class="caption">实时刷新 · 不显示正文</span>
+              </div>
+              <div id="captureLogList" class="capture-log-list"></div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script type="module" src="./assets/novel-capture.js"></script>
+  </body>
+  </html>

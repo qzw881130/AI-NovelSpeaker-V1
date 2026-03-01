@@ -1,0 +1,132 @@
+import { deletePrompt, duplicatePrompt, getData, savePrompt } from "./store.js";
+import { renderNav, showPageError, toast } from "./ui.js";
+
+let editingId = "";
+let modalMode = "create";
+let currentData = { prompts: [] };
+
+function orderedPrompts() {
+  return [...(currentData.prompts || [])].sort((a, b) => {
+    const at = a.type === "system" ? 0 : 1;
+    const bt = b.type === "system" ? 0 : 1;
+    if (at !== bt) return at - bt;
+    return Number(b.id) - Number(a.id);
+  });
+}
+
+function render() {
+  document.getElementById("promptList").innerHTML = orderedPrompts()
+    .map(
+      (p) => `
+      <article class="asset-card">
+        <div class="queue-head">
+          <h3>${p.name}</h3>
+          <span class="chip ${p.type === "system" ? "pending" : "completed"}">${p.type === "system" ? "系统" : "用户"}</span>
+        </div>
+        <p class="meta">${p.description || "-"}</p>
+        <div class="card-actions">
+          <button class="ghost-btn" data-action="copy" data-id="${p.id}">复制为用户提示词</button>
+          <button class="ghost-btn" data-action="${p.type === "system" ? "view" : "edit"}" data-id="${p.id}">${p.type === "system" ? "查看" : "编辑"}</button>
+          ${p.type === "user" ? `<button class="ghost-btn" data-action="delete" data-id="${p.id}">删除</button>` : ""}
+        </div>
+      </article>
+    `
+    )
+    .join("");
+
+  document.querySelectorAll("[data-action]").forEach((el) => {
+    el.addEventListener("click", () => onAction(el.dataset.action, el.dataset.id));
+  });
+}
+
+function setFormReadonly(readonly) {
+  const form = document.getElementById("promptForm");
+  form.name.readOnly = readonly;
+  form.description.readOnly = readonly;
+  form.content.readOnly = readonly;
+  const saveBtn = document.getElementById("promptSaveBtn");
+  saveBtn.hidden = readonly;
+  document.getElementById("promptCancelBtn").textContent = readonly ? "关闭" : "取消";
+}
+
+function openModal(promptItem, mode = "create") {
+  modalMode = mode;
+  editingId = promptItem?.id || "";
+  document.getElementById("promptModalTitle").textContent =
+    mode === "view" ? "查看系统提示词" : editingId ? "编辑提示词" : "新建提示词";
+  const form = document.getElementById("promptForm");
+  form.name.value = promptItem?.name || "";
+  form.description.value = promptItem?.description || "";
+  form.content.value = promptItem?.content || "";
+  setFormReadonly(mode === "view");
+  document.getElementById("promptModal").showModal();
+}
+
+function onAction(action, id) {
+  const item = currentData.prompts.find((p) => String(p.id) === String(id));
+  if (!item) return;
+  if (action === "copy") {
+    duplicatePrompt(id)
+      .then(async () => {
+        toast("已复制为用户提示词");
+        currentData = await getData();
+        render();
+      })
+      .catch((err) => toast(`复制失败: ${err.message}`));
+  }
+  if (action === "edit") {
+    openModal(item, "edit");
+  }
+  if (action === "view") {
+    openModal(item, "view");
+  }
+  if (action === "delete") {
+    if (!window.confirm(`确认删除提示词 ${item.name} 吗？`)) return;
+    deletePrompt(id)
+      .then(async () => {
+        toast("提示词已删除");
+        currentData = await getData();
+        render();
+      })
+      .catch((err) => toast(`删除失败: ${err.message}`));
+  }
+}
+
+function bindEvents() {
+  document.getElementById("createPromptBtn").addEventListener("click", () => openModal(null, "create"));
+  document.getElementById("promptCancelBtn").addEventListener("click", () => {
+    document.getElementById("promptModal").close();
+  });
+  document.getElementById("promptForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (modalMode === "view") {
+      document.getElementById("promptModal").close();
+      return;
+    }
+    const form = event.currentTarget;
+    await savePrompt(
+      {
+        name: form.name.value.trim(),
+        description: form.description.value.trim(),
+        content: form.content.value.trim(),
+      },
+      editingId
+    );
+    document.getElementById("promptModal").close();
+    toast(editingId ? "提示词已更新" : "提示词已创建");
+    currentData = await getData();
+    render();
+  });
+}
+
+async function init() {
+  renderNav();
+  bindEvents();
+  currentData = await getData();
+  render();
+}
+
+init().catch((err) => {
+  renderNav();
+  showPageError(err, "提示词页初始化失败");
+});

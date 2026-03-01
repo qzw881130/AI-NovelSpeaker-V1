@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI NovelSpeaker V1 - 小说管理</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="main-nav" id="mainNav"></aside>
+      <main class="page">
+        <header class="page-header">
+          <div>
+            <h1>小说管理中心</h1>
+          </div>
+          <div class="header-middle-refresh">
+            <label for="autoRefreshSelect" class="eyebrow">自动刷新</label>
+            <select id="autoRefreshSelect">
+              <option value="0" selected>不刷新</option>
+              <option value="5">5秒</option>
+              <option value="20">20秒</option>
+              <option value="60">1分钟</option>
+            </select>
+          </div>
+          <div class="header-actions">
+            <button class="ghost-btn" id="createNovelBtn" type="button">创建小说</button>
+          </div>
+        </header>
+
+        <section class="hero-grid">
+          <article class="hero-card">
+            <h2>项目统计</h2>
+            <div class="hero-metrics" id="projectMetrics"></div>
+          </article>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>小说列表</h2>
+            <div class="toolbar">
+              <input id="novelKeyword" type="search" placeholder="搜索小说名 / 作者" />
+              <select id="novelSort">
+                <option value="updated">按最近更新</option>
+                <option value="chapters">按章节数</option>
+                <option value="words">按总字数</option>
+              </select>
+            </div>
+          </div>
+          <div id="novelGrid" class="novel-grid"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>文件存储统计</h2>
+          </div>
+          <div id="storageTable" class="storage-table"></div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="novelModal" class="modal">
+      <form id="novelForm" method="dialog">
+        <h3 id="novelModalTitle">创建小说</h3>
+        <div class="form-grid">
+          <label>
+            小说名
+            <input name="name" required />
+          </label>
+          <label>
+            作者
+            <input name="author" required />
+          </label>
+          <label>
+            英文目录
+            <input
+              name="englishDir"
+              required
+              maxlength="25"
+              pattern="[A-Za-z0-9_]{1,25}"
+              title="仅允许大小写英文、数字、下划线，且不超过25字符"
+              placeholder="classic_shz"
+            />
+          </label>
+          <label>
+            JSON 解析提示词
+            <select name="promptId" id="novelPromptSelect"></select>
+          </label>
+          <label>
+            ComfyUI 工作流
+            <select name="workflowId" id="novelWorkflowSelect"></select>
+          </label>
+          <label class="full">
+            简介
+            <textarea name="intro" rows="3" required></textarea>
+          </label>
+        </div>
+        <menu>
+          <button value="cancel" class="ghost-btn" type="button" id="novelCancelBtn">取消</button>
+          <button value="default" class="primary-btn" type="submit">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast"></div>
+    <script type="module" src="./assets/index.js"></script>
+  </body>
+  </html>

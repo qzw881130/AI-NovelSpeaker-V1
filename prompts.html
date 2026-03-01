@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI NovelSpeaker V1 - JSON提示词</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="main-nav" id="mainNav"></aside>
+      <main class="page">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">提示词资产</p>
+            <h1>JSON 提示词管理</h1>
+          </div>
+          <div class="header-actions">
+            <button class="primary-btn" id="createPromptBtn" type="button">新建用户提示词</button>
+          </div>
+        </header>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>提示词列表</h2>
+          </div>
+          <div id="promptList" class="asset-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="promptModal" class="modal">
+      <form id="promptForm" method="dialog">
+        <h3 id="promptModalTitle">新建提示词</h3>
+        <div class="form-grid">
+          <label>名称<input name="name" required /></label>
+          <label class="full">描述<input name="description" /></label>
+          <label class="full">内容<textarea name="content" rows="8" required></textarea></label>
+        </div>
+        <menu>
+          <button class="ghost-btn" id="promptCancelBtn" type="button">取消</button>
+          <button class="primary-btn" id="promptSaveBtn" type="submit">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast"></div>
+    <script type="module" src="./assets/prompts.js"></script>
+  </body>
+  </html>

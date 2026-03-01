@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI NovelSpeaker V1 - 系统配置</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="main-nav" id="mainNav"></aside>
+      <main class="page">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">系统连接</p>
+            <h1>模型与服务配置</h1>
+          </div>
+        </header>
+
+        <section class="panel form-panel">
+          <h2>ComfyUI</h2>
+          <label>ComfyUI 地址<input id="comfyUrl" placeholder="http://127.0.0.1:8188" /></label>
+          <div class="test-row">
+            <button class="ghost-btn" id="testComfyBtn" type="button">测试 ComfyUI</button>
+            <span id="testComfyResult" class="test-result">未测试</span>
+          </div>
+        </section>
+
+        <section class="panel form-panel">
+          <h2>LLM配置</h2>
+          <div class="form-grid">
+            <label>
+              提供商
+              <select id="llmProvider">
+                <option value="grok">Grok</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="qwen">千问</option>
+                <option value="gemini">Gemini</option>
+                <option value="openai">OpenAI</option>
+                <option value="custom">自定义API</option>
+              </select>
+            </label>
+            <label>API Base URL<input id="llmBase" /></label>
+            <label>模型名称<input id="llmModel" /></label>
+            <label>API Key<input id="llmKey" type="password" /></label>
+            <label>Temperature<input id="llmTemperature" type="number" min="0" max="2" step="0.1" /></label>
+            <label>Max Tokens<input id="llmTokens" type="number" min="128" step="1" /></label>
+            <label>
+              每批最多处理文本字数
+              <select id="llmBatchChars">
+                <option value="3500">3500 [最保险]</option>
+                <option value="4000">4000</option>
+                <option value="5000">5000</option>
+                <option value="6000">6000</option>
+                <option value="7000">7000 [grok模型支持]</option>
+              </select>
+            </label>
+            <label class="full">代理 Proxy URL<input id="proxyUrl" placeholder="http://127.0.0.1:7890" /></label>
+          </div>
+          <div class="test-row">
+            <button class="ghost-btn" id="testLlmBtn" type="button">测试 LLM</button>
+            <span id="testLlmResult" class="test-result">未测试</span>
+          </div>
+          <p class="caption">支持 Grok / DeepSeek / 千问 / Gemini / OpenAI / 自定义 API。</p>
+        </section>
+
+        <section class="settings-actions-bottom">
+          <button class="primary-btn" id="saveSettingsBtn" type="button">保存配置</button>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script type="module" src="./assets/settings.js"></script>
+  </body>
+  </html>

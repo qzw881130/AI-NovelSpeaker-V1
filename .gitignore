@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+
+# Local Python/tool caches
+.ruff_cache/
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Keep currently tracked novel files, ignore new ones later.
+# (tracked files remain tracked even when matched here)
+novel/**

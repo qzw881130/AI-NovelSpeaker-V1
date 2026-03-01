@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI NovelSpeaker V1 - JSON任务</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="main-nav" id="mainNav"></aside>
+      <main class="page">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">任务执行面板</p>
+            <h1>JSON 任务队列</h1>
+          </div>
+          <div class="header-middle-refresh">
+            <span class="eyebrow">自动刷新</span>
+            <select id="jsonAutoRefreshSelect">
+              <option value="0">关闭</option>
+              <option value="5">5 秒</option>
+              <option value="20">20 秒</option>
+              <option value="60">60 秒</option>
+            </select>
+            <button class="ghost-btn" type="button" id="refreshJsonTasksBtn">刷新</button>
+          </div>
+        </header>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>筛选</h2>
+            <div class="toolbar">
+              <select id="taskNovelSelect"></select>
+              <select id="taskStatusSelect">
+                <option value="all">全部状态</option>
+                <option value="pending">待执行</option>
+                <option value="running">执行中</option>
+                <option value="completed">已完成</option>
+                <option value="failed">失败</option>
+              </select>
+            </div>
+          </div>
+          <div id="jsonTaskList" class="queue-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script type="module" src="./assets/json-tasks.js"></script>
+  </body>
+  </html>
