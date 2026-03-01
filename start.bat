@@ -45,14 +45,33 @@ echo [start] Accessible URLs:
 echo   - Local: http://127.0.0.1:%PORT%/index.html
 
 set "LAN_PRINTED=0"
-for /f "tokens=2 delims=:" %%A in ('ipconfig ^| findstr /C:"IPv4 Address" /C:"IPv4 地址"') do (
-  set "IP=%%A"
-  set "IP=!IP: =!"
-  if not "!IP!"=="" if /I not "!IP!"=="127.0.0.1" (
-    echo   - LAN  : http://!IP!:%PORT%/index.html
-    set "LAN_PRINTED=1"
+
+where powershell >nul 2>&1
+if %errorlevel%==0 (
+  for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue ^| Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } ^| Select-Object -ExpandProperty IPAddress -Unique"`) do (
+    set "IP=%%I"
+    set "IP=!IP: =!"
+    if not "!IP!"=="" (
+      echo   - LAN  : http://!IP!:%PORT%/index.html
+      set "LAN_PRINTED=1"
+    )
   )
 )
+
+if "%LAN_PRINTED%"=="0" (
+  for /f "tokens=2 delims=:" %%A in ('ipconfig ^| findstr /C:"IPv4"') do (
+    set "IP=%%A"
+    set "IP=!IP: =!"
+    set "IP=!IP:(Preferred)=!"
+    set "IP=!IP:(首选)=!"
+    set "IP=!IP:(偏好)=!"
+    if not "!IP!"=="" if /I not "!IP!"=="127.0.0.1" (
+      echo   - LAN  : http://!IP!:%PORT%/index.html
+      set "LAN_PRINTED=1"
+    )
+  )
+)
+
 if "%LAN_PRINTED%"=="0" (
   echo   - LAN  : ^(not detected automatically^)
 )
