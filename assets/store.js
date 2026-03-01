@@ -1,4 +1,24 @@
+import { translateBackendError } from "./i18n.js";
+
 const ACTIVE_KEY = "ai_novel_speaker_v1_active_novel";
+
+const DEFAULT_SETTINGS = {
+  comfyUrl: "http://127.0.0.1:8188",
+  proxyUrl: "",
+  llm: {
+    provider: "grok",
+    baseUrl: "",
+    model: "",
+    apiKey: "",
+    temperature: 0.3,
+    maxTokens: 8192,
+    batchMaxChars: 3500,
+  },
+  ui: {
+    language: "zh-CN",
+    timezone: "Asia/Shanghai",
+  },
+};
 
 let cache = {
   novels: [],
@@ -6,20 +26,24 @@ let cache = {
   workflows: [],
   jsonTasks: [],
   audioTasks: [],
-  settings: {
-    comfyUrl: "http://127.0.0.1:8188",
-    proxyUrl: "",
-    llm: {
-      provider: "grok",
-      baseUrl: "",
-      model: "",
-      apiKey: "",
-      temperature: 0.3,
-      maxTokens: 8192,
-      batchMaxChars: 3500,
-    },
-  },
+  settings: DEFAULT_SETTINGS,
 };
+
+function normalizeSettings(raw) {
+  const next = raw || {};
+  return {
+    comfyUrl: String(next.comfyUrl || DEFAULT_SETTINGS.comfyUrl),
+    proxyUrl: String(next.proxyUrl || ""),
+    llm: {
+      ...DEFAULT_SETTINGS.llm,
+      ...(next.llm || {}),
+    },
+    ui: {
+      ...DEFAULT_SETTINGS.ui,
+      ...(next.ui || {}),
+    },
+  };
+}
 
 async function api(path, options = {}) {
   const res = await fetch(path, {
@@ -30,7 +54,7 @@ async function api(path, options = {}) {
     let errorText = `HTTP ${res.status}`;
     try {
       const data = await res.json();
-      errorText = data.error || errorText;
+      errorText = translateBackendError(data.error || errorText);
     } catch {
       // ignore
     }
@@ -57,13 +81,14 @@ function normalizeData(raw) {
     workflows: raw.workflows || [],
     jsonTasks: raw.jsonTasks || [],
     audioTasks: raw.audioTasks || [],
-    settings: raw.settings || cache.settings,
+    settings: normalizeSettings(raw.settings || cache.settings),
   };
 }
 
 async function refreshCache() {
   const data = await api("/api/bootstrap");
   cache = normalizeData(data);
+  localStorage.setItem("ai_novel_ui_language", String(cache.settings?.ui?.language || "zh-CN"));
   return cache;
 }
 

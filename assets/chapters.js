@@ -12,7 +12,8 @@ import {
   setActiveNovelId,
   updateChapter,
 } from "./store.js";
-import { fmtNumber, incrementNavBadge, renderNav, showPageError, toast } from "./ui.js";
+import { fmtDateTime, fmtNumber, incrementNavBadge, renderNav, showPageError, toast } from "./ui.js";
+import { localizeDocumentText, t, translateText } from "./i18n.js";
 
 let allNovels = [];
 let activeNovel = null;
@@ -149,7 +150,7 @@ function getNovelByQueryOrActive() {
 }
 
 function setHeader(novel) {
-  document.getElementById("chapterPageTitle").textContent = `${novel.name} 章节管理`;
+  document.getElementById("chapterPageTitle").textContent = `${novel.name} ${t("nav.chapters")}`;
 }
 
 function renderNovelSelect() {
@@ -199,10 +200,11 @@ function renderChapterList() {
     el.addEventListener("click", () => loadChapter(Number(el.dataset.chapterNum)));
   });
   renderQuickJump(chapterState);
+  localizeDocumentText(document);
 }
 
 function setStatus(text) {
-  document.getElementById("chapterStatus").textContent = text;
+  document.getElementById("chapterStatus").textContent = translateText(text);
 }
 
 function getCurrentChapterState() {
@@ -214,7 +216,7 @@ function resetChapterAudioPlayer() {
   const player = document.getElementById("chapterAudioPlayer");
   const duration = document.getElementById("chapterAudioDuration");
   box.classList.add("hidden");
-  duration.textContent = "时长：-";
+  duration.textContent = "-";
   player.pause();
   player.removeAttribute("src");
   player.load();
@@ -231,7 +233,7 @@ function refreshChapterAudioState(detail) {
   const player = document.getElementById("chapterAudioPlayer");
   const duration = document.getElementById("chapterAudioDuration");
   player.src = `/api/novels/${Number(activeNovel.id)}/chapters/${Number(detail.chapterNum)}/audio-stream`;
-  duration.textContent = "时长：读取中...";
+  duration.textContent = "...";
   box.classList.remove("hidden");
   downloadBtn.disabled = false;
 }
@@ -249,11 +251,12 @@ async function loadChapter(chapterNum) {
     await syncGenerateAudioVisibility();
     setStatus("就绪");
     renderChapterList();
+    localizeDocumentText(document);
   } catch (err) {
     setGenerateAudioVisible(false);
     resetChapterAudioPlayer();
     document.getElementById("downloadAudioBtn").disabled = true;
-    setStatus(`读取章节失败: ${err.message}`);
+    setStatus(t("error.loadFailed", { msg: err.message }));
   }
 }
 
@@ -347,6 +350,7 @@ function renderJsonViewMode() {
     return `【${name}】\n人设: ${instruct}\n示例: ${sample}`;
   });
   preview.textContent = lines.join("\n\n");
+  localizeDocumentText(document);
 }
 
 async function saveJsonViewEdit() {
@@ -389,7 +393,7 @@ async function saveJsonViewEdit() {
   renderJsonViewMode();
   await syncGenerateAudioVisibility();
   setStatus("JSON 已保存");
-  toast("JSON 已保存");
+  toast(t("toast.saved"));
 }
 
 async function refreshChapters() {
@@ -405,6 +409,7 @@ async function refreshChapters() {
     document.getElementById("chapterMeta").textContent = "当前小说尚未创建章节";
     document.getElementById("chapterContent").textContent = "请先点击“创建章回”录入章节信息。";
     renderChapterList();
+    localizeDocumentText(document);
     return;
   }
   if (!chapterState.some((x) => x.chapterNum === activeChapterNum)) {
@@ -417,7 +422,7 @@ async function refreshChapters() {
 function bindActions() {
   document.getElementById("copyChapterBtn").addEventListener("click", () => {
     if (!activeChapterDetail) return;
-    copyText(`${activeChapterDetail.title}\n\n${activeChapterDetail.content}`, "正文已复制");
+    copyText(`${activeChapterDetail.title}\n\n${activeChapterDetail.content}`, t("toast.copied"));
   });
 
   document.getElementById("downloadChapterBtn").addEventListener("click", () => {
@@ -433,11 +438,11 @@ function bindActions() {
       incrementNavBadge("json", 1);
       renderNav();
       setStatus("已加入 JSON 转换队列");
-      toast("已加入 JSON 转换队列");
+      toast(t("toast.created"));
       await refreshChapters();
     } catch (err) {
-      setStatus(`加入 JSON 队列失败: ${err.message}`);
-      toast(`加入 JSON 队列失败: ${err.message}`);
+      setStatus(t("error.operationFailed", { msg: err.message }));
+      toast(t("error.operationFailed", { msg: err.message }));
     }
   });
 
@@ -455,6 +460,7 @@ function bindActions() {
     jsonViewMode = "raw";
     jsonViewEditing = false;
     renderJsonViewMode();
+    localizeDocumentText(document);
     document.getElementById("jsonDialog").showModal();
   });
 
@@ -462,22 +468,26 @@ function bindActions() {
     jsonViewMode = "raw";
     jsonViewEditing = false;
     renderJsonViewMode();
+    localizeDocumentText(document);
   });
   document.getElementById("viewJsonJubenBtn").addEventListener("click", () => {
     jsonViewMode = "juben";
     jsonViewEditing = false;
     renderJsonViewMode();
+    localizeDocumentText(document);
   });
   document.getElementById("viewJsonRolesBtn").addEventListener("click", () => {
     jsonViewMode = "roles";
     jsonViewEditing = false;
     renderJsonViewMode();
+    localizeDocumentText(document);
   });
 
   document.getElementById("editJsonViewBtn").addEventListener("click", () => {
     if (jsonViewMode !== "juben" && jsonViewMode !== "roles") return;
     jsonViewEditing = !jsonViewEditing;
     renderJsonViewMode();
+    localizeDocumentText(document);
   });
   document.getElementById("saveJsonViewBtn").addEventListener("click", async () => {
     await saveJsonViewEdit();
@@ -487,7 +497,7 @@ function bindActions() {
     const text = jsonViewEditing
       ? document.getElementById("chapterJsonEditor").value || ""
       : document.getElementById("chapterJsonPreview").textContent || "";
-    copyText(text, "JSON 已复制");
+    copyText(text, t("toast.copied"));
   });
 
   document.getElementById("generateAudioBtn").addEventListener("click", async () => {
@@ -499,35 +509,34 @@ function bindActions() {
       const rawLocal = document.getElementById("audioScheduleAt").value;
       scheduledAt = parseScheduleToUtcIso(rawLocal);
       if (!scheduledAt) {
-        setStatus("请选择有效的执行时间");
-        toast("请选择有效的执行时间");
+        setStatus(t("api.invalidScheduledAt"));
+        toast(t("api.invalidScheduledAt"));
         return;
       }
-      const dtLocal = new Date(rawLocal);
-      scheduledAtText = Number.isNaN(dtLocal.getTime()) ? rawLocal : dtLocal.toLocaleString("zh-CN", { hour12: false });
+      scheduledAtText = fmtDateTime(scheduledAt) || rawLocal;
     }
     try {
       await requestGenerateAudio(activeNovel.id, activeChapterNum, { scheduledAt });
       incrementNavBadge("audio", 1);
       renderNav();
       if (scheduleMode === "scheduled") {
-        setStatus(`有声任务已预约（${scheduledAtText}）`);
-        toast(`有声任务已预约（${scheduledAtText}）`);
+        setStatus(`${t("toast.created")} (${scheduledAtText})`);
+        toast(`${t("toast.created")} (${scheduledAtText})`);
       } else {
-        setStatus("已加入有声队列");
-        toast("已加入有声队列");
+        setStatus("开始下载音频");
+        toast(t("toast.created"));
       }
       await refreshChapters();
     } catch (err) {
-      setStatus(`加入有声队列失败: ${err.message}`);
-      toast(`加入有声队列失败: ${err.message}`);
+      setStatus(t("error.operationFailed", { msg: err.message }));
+      toast(t("error.operationFailed", { msg: err.message }));
     }
   });
 
   document.getElementById("downloadAudioBtn").addEventListener("click", () => {
     if (!activeNovel || !activeChapterDetail) return;
     if (!activeChapterDetail.hasAudio) {
-      setStatus("当前章回暂无音频");
+      setStatus(t("api.notFound"));
       return;
     }
     downloadChapterAudio(activeNovel.id, activeChapterDetail.chapterNum)
@@ -535,7 +544,7 @@ function bindActions() {
         setStatus("开始下载音频");
       })
       .catch((err) => {
-        setStatus(`下载音频失败: ${err.message}`);
+        setStatus(t("error.operationFailed", { msg: err.message }));
       });
   });
 
@@ -551,13 +560,13 @@ function bindActions() {
     if (!activeNovel || !activeChapterNum) return;
     const chapter = getCurrentChapterState();
     if (!chapter) return;
-    if (!window.confirm(`确认删除 ${chapter.title} 吗？该操作不可恢复。`)) return;
+    if (!window.confirm(t("confirm.deleteChapter", { title: chapter.title }))) return;
     try {
       await deleteChapter(activeNovel.id, activeChapterNum);
-      toast("章回已删除");
+      toast(t("toast.deleted"));
       await refreshChapters();
     } catch (err) {
-      toast(`删除失败: ${err.message}`);
+      toast(t("error.deleteFailed", { msg: err.message }));
     }
   });
 
@@ -575,22 +584,22 @@ function bindActions() {
       content: form.content.value,
     };
     if (!input.chapterNum || !input.title) {
-      toast("请填写章回序号和标题");
+      toast(t("error.operationFailed", { msg: "invalid input" }));
       return;
     }
     try {
       if (chapterModalMode === "create") {
         await createChapter(activeNovel.id, input);
-        toast("章回已创建");
+        toast(t("toast.created"));
       } else {
         await updateChapter(activeNovel.id, chapterEditSourceNum, input);
-        toast("章回已更新");
+        toast(t("toast.updated"));
       }
       document.getElementById("chapterModal").close();
       activeChapterNum = input.chapterNum;
       await refreshChapters();
     } catch (err) {
-      toast(`保存失败: ${err.message}`);
+      toast(t("error.saveFailed", { msg: err.message }));
     }
   });
 
@@ -610,7 +619,7 @@ function bindActions() {
     if (!activeNovel) return;
     setHeader(activeNovel);
     await refreshChapters();
-    toast(`已切换到 ${activeNovel.name}`);
+    toast(`${t("common.view")}: ${activeNovel.name}`);
   });
 
   const player = document.getElementById("chapterAudioPlayer");
@@ -643,12 +652,13 @@ function openChapterModal(mode) {
     modalInitialWordCount = 0;
     form.content.value = "";
     syncModalWordCount(form);
+    localizeDocumentText(document);
     modal.showModal();
     return;
   }
 
   if (!activeChapterDetail) {
-    toast("请先选择一个章回");
+    toast(t("api.chapterNotFound"));
     return;
   }
   chapterEditSourceNum = activeChapterDetail.chapterNum;
@@ -658,6 +668,7 @@ function openChapterModal(mode) {
   modalInitialWordCount = Number(activeChapterDetail.wordCount) || 0;
   form.content.value = activeChapterDetail.content || "";
   syncModalWordCount(form);
+  localizeDocumentText(document);
   modal.showModal();
 }
 
@@ -678,9 +689,10 @@ async function init() {
   renderNovelSelect();
   bindActions();
   await refreshChapters();
+  localizeDocumentText(document);
 }
 
 init().catch((err) => {
   renderNav();
-  showPageError(err, "章节管理页初始化失败");
+  showPageError(err, t("error.pageLoad"));
 });

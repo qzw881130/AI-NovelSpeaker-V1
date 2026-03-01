@@ -1,5 +1,6 @@
 import { deleteWorkflow, duplicateWorkflow, getData, saveWorkflow } from "./store.js";
 import { renderNav, showPageError, toast } from "./ui.js";
+import { localizeDocumentText, t, translateText } from "./i18n.js";
 
 let editingId = "";
 let modalMode = "create";
@@ -23,7 +24,7 @@ function render() {
           <h3>${w.name}</h3>
           <span class="chip ${w.type === "system" ? "pending" : "completed"}">${w.type === "system" ? "系统" : "用户"}</span>
         </div>
-        <p class="meta">${w.description || "-"}</p>
+        <p class="meta">${translateText(w.description || "-")}</p>
         <div class="card-actions">
           <button class="ghost-btn" data-action="copy" data-id="${w.id}">复制为用户工作流</button>
           <button class="ghost-btn" data-action="${w.type === "system" ? "view" : "edit"}" data-id="${w.id}">${w.type === "system" ? "查看" : "编辑"}</button>
@@ -37,6 +38,7 @@ function render() {
   document.querySelectorAll("[data-action]").forEach((el) => {
     el.addEventListener("click", () => onAction(el.dataset.action, el.dataset.id));
   });
+  localizeDocumentText(document);
 }
 
 function setFormReadonly(readonly) {
@@ -59,6 +61,7 @@ function openModal(item, mode = "create") {
   form.description.value = item?.description || "";
   form.jsonText.value = item?.jsonText || '{"workflow":""}';
   setFormReadonly(mode === "view");
+  localizeDocumentText(document);
   document.getElementById("workflowModal").showModal();
 }
 
@@ -68,11 +71,11 @@ function onAction(action, id) {
   if (action === "copy") {
     duplicateWorkflow(id)
       .then(async () => {
-        toast("已复制为用户工作流");
+        toast(t("toast.copied"));
         currentData = await getData();
         render();
       })
-      .catch((err) => toast(`复制失败: ${err.message}`));
+      .catch((err) => toast(t("error.copyFailed", { msg: err.message })));
   }
   if (action === "edit") {
     openModal(item, "edit");
@@ -81,14 +84,14 @@ function onAction(action, id) {
     openModal(item, "view");
   }
   if (action === "delete") {
-    if (!window.confirm(`确认删除工作流 ${item.name} 吗？`)) return;
+    if (!window.confirm(t("confirm.deleteWorkflow", { name: item.name }))) return;
     deleteWorkflow(id)
       .then(async () => {
-        toast("工作流已删除");
+        toast(t("toast.deleted"));
         currentData = await getData();
         render();
       })
-      .catch((err) => toast(`删除失败: ${err.message}`));
+      .catch((err) => toast(t("error.deleteFailed", { msg: err.message })));
   }
 }
 
@@ -113,7 +116,7 @@ function bindEvents() {
       editingId
     );
     document.getElementById("workflowModal").close();
-    toast(editingId ? "工作流已更新" : "工作流已创建");
+    toast(editingId ? t("toast.updated") : t("toast.created"));
     currentData = await getData();
     render();
   });
@@ -124,9 +127,10 @@ async function init() {
   bindEvents();
   currentData = await getData();
   render();
+  localizeDocumentText(document);
 }
 
 init().catch((err) => {
   renderNav();
-  showPageError(err, "工作流页初始化失败");
+  showPageError(err, t("error.pageLoad"));
 });

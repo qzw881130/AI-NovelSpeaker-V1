@@ -1,12 +1,17 @@
 import { cancelAllAudioTasks, deleteAudioTask, getData } from "./store.js";
-import { clearNavBadge, renderNav, showPageError, toast } from "./ui.js";
+import { clearNavBadge, fmtDateTime, fmtNumber, renderNav, showPageError, toast } from "./ui.js";
+import { localizeDocumentText, t } from "./i18n.js";
 
 let currentData = { novels: [], workflows: [], audioTasks: [] };
 let elapsedTimer = null;
 let refreshTimer = null;
 
 function workflowName(map, id) {
-  return map.get(String(id)) || "未绑定";
+  return map.get(String(id)) || "-";
+}
+
+function statusLabel(status) {
+  return t(`common.status.${status}`) || status;
 }
 
 function escapeHtml(text) {
@@ -32,7 +37,7 @@ function parseServerTime(raw) {
 
 function formatDateTime(raw) {
   const dt = parseServerTime(raw);
-  return dt ? dt.toLocaleString() : "-";
+  return dt ? fmtDateTime(dt) : "-";
 }
 
 function formatDuration(ms) {
@@ -110,7 +115,8 @@ function render() {
       elapsedTimer = null;
     }
     document.getElementById("audioTaskList").innerHTML =
-      '<article class="queue-card"><p class="meta">当前筛选条件下暂无有声任务。</p></article>';
+      '<article class="queue-card"><p class="meta">-</p></article>';
+    localizeDocumentText(document);
     return;
   }
 
@@ -120,12 +126,12 @@ function render() {
       <article class="queue-card">
         <div class="queue-head">
           <h3>${task.title}</h3>
-          <strong class="status ${task.status}">${task.status}</strong>
+          <strong class="status ${task.status}">${statusLabel(task.status)}</strong>
         </div>
-        <p class="meta">${task.novelName || ""} · 章节 ${task.chapter} ${task.title ? `· 标题 ${escapeHtml(task.title)}` : ""} · 字数 ${Number(task.wordCount || 0).toLocaleString("zh-CN")} · 工作流 ${workflowName(workflowMap, task.workflowId)} · Comfy ${task.comfyStatus || "-"} · 计划 ${task.scheduledAt ? formatDateTime(task.scheduledAt) : "立即"}</p>
+        <p class="meta">${task.novelName || ""} · #${task.chapter} ${task.title ? `· ${escapeHtml(task.title)}` : ""} · ${fmtNumber(task.wordCount || 0)} · ${workflowName(workflowMap, task.workflowId)} · Comfy ${task.comfyStatus || "-"} · ${task.scheduledAt ? formatDateTime(task.scheduledAt) : t("common.immediate")}</p>
         <p class="meta">创建 ${formatDateTime(task.createdAt)}${taskElapsedText(task) ? ` · ${taskElapsedText(task)}` : ""}</p>
-        ${task.status === "failed" && task.errorMessage ? `<p class="task-error">失败原因：${escapeHtml(task.errorMessage)}</p>` : ""}
-        ${task.status !== "running" ? `<div class="card-actions"><button class="ghost-btn" data-audio-action="delete" data-task-id="${task.id}">删除</button></div>` : ""}
+        ${task.status === "failed" && task.errorMessage ? `<p class="task-error">${escapeHtml(task.errorMessage)}</p>` : ""}
+        ${task.status !== "running" ? `<div class="card-actions"><button class="ghost-btn" data-audio-action="delete" data-task-id="${task.id}">${t("common.delete")}</button></div>` : ""}
         <div class="progress ${task.status === "running" ? "is-running-animated" : ""} ${task.status === "failed" ? "is-failed" : ""}"><i style="width:${progressWidth(task)}%"></i></div>
       </article>
     `
@@ -136,16 +142,17 @@ function render() {
       const taskId = Number(el.getAttribute("data-task-id") || 0);
       const task = currentData.audioTasks.find((x) => Number(x.id) === taskId);
       if (!task) return;
-      if (!window.confirm(`确认删除有声任务「${task.title}」吗？`)) return;
+      if (!window.confirm(t("confirm.deleteAudioTask", { title: task.title }))) return;
       try {
         await deleteAudioTask(taskId);
-        toast("任务已删除");
+        toast(t("toast.deleted"));
         await reload();
       } catch (err) {
-        toast(`删除失败: ${err.message}`);
+        toast(t("error.deleteFailed", { msg: err.message }));
       }
     });
   });
+  localizeDocumentText(document);
   bindElapsedTimer();
 }
 
@@ -179,13 +186,13 @@ function bindEvents() {
 
   document.getElementById("refreshAudioQueueBtn").addEventListener("click", async () => {
     await reload();
-    toast("队列已刷新");
+    toast(t("common.refresh"));
   });
 
   document.getElementById("cancelAllAudioTasksBtn").addEventListener("click", async () => {
-    if (!window.confirm("确认终止所有 pending/running 的有声任务吗？")) return;
+    if (!window.confirm(t("confirm.cancelAllAudio"))) return;
     const res = await cancelAllAudioTasks();
-    toast(String(res.message || "已终止所有有声任务"));
+    toast(String(res.message || t("common.status.cancelled")));
     await reload();
   });
 
@@ -197,6 +204,7 @@ async function init() {
   renderNav();
   bindEvents();
   await reload();
+  localizeDocumentText(document);
   applyRefreshInterval();
   window.addEventListener("beforeunload", () => {
     if (elapsedTimer) clearInterval(elapsedTimer);
@@ -206,5 +214,5 @@ async function init() {
 
 init().catch((err) => {
   renderNav();
-  showPageError(err, "有声队列页初始化失败");
+  showPageError(err, t("error.pageLoad"));
 });

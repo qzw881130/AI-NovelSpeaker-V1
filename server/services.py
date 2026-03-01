@@ -409,10 +409,19 @@ def fetch_settings(conn: sqlite3.Connection) -> dict:
         "maxTokens": int(kv.get("llm_max_tokens", "8192")),
         "batchMaxChars": batch_max_chars,
     }
+    ui_language = str(kv.get("ui_language", "zh-CN") or "zh-CN").strip() or "zh-CN"
+    ui_timezone = (
+        str(kv.get("ui_timezone", "Asia/Shanghai") or "Asia/Shanghai").strip()
+        or "Asia/Shanghai"
+    )
     return {
         "comfyUrl": comfy_url,
         "proxyUrl": kv.get("proxy_url", ""),
         "llm": llm,
+        "ui": {
+            "language": ui_language,
+            "timezone": ui_timezone,
+        },
     }
 
 

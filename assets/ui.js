@@ -1,14 +1,33 @@
-import { getActiveNovelId, getData, setActiveNovelId } from "./store.js";
+import { getActiveNovelId, getCachedData, getData, setActiveNovelId } from "./store.js";
+import { t, translateText } from "./i18n.js";
+
+const UI_LANGUAGE_OPTIONS = new Set(["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR"]);
+const UI_TIMEZONE_OPTIONS = new Set([
+  "Asia/Shanghai",
+  "Asia/Hong_Kong",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "America/New_York",
+  "America/Los_Angeles",
+  "Europe/London",
+  "Europe/Paris",
+  "Australia/Sydney",
+  "UTC",
+]);
+const UI_DEFAULTS = {
+  language: "zh-CN",
+  timezone: "Asia/Shanghai",
+};
 
 const NAV_ITEMS = [
-  { href: "./index.html", label: "小说管理" },
-  { href: "./chapters.html", label: "章节管理" },
-  { href: "./json-tasks.html", label: "JSON任务" },
-  { href: "./audio-queue.html", label: "有声队列" },
-  { href: "./prompts.html", label: "提示词管理" },
-  { href: "./workflows.html", label: "工作流管理" },
-  { href: "./settings.html", label: "系统配置" },
-  { href: "./novel-capture.html", label: "小说抓取" },
+  { href: "./index.html", labelKey: "nav.novels" },
+  { href: "./chapters.html", labelKey: "nav.chapters" },
+  { href: "./json-tasks.html", labelKey: "nav.jsonTasks" },
+  { href: "./audio-queue.html", labelKey: "nav.audioQueue" },
+  { href: "./prompts.html", labelKey: "nav.prompts" },
+  { href: "./workflows.html", labelKey: "nav.workflows" },
+  { href: "./settings.html", labelKey: "nav.settings" },
+  { href: "./novel-capture.html", labelKey: "nav.capture" },
 ];
 
 const NAV_BADGE_KEYS = {
@@ -60,7 +79,7 @@ function renderNav() {
   const links = NAV_ITEMS.map((item) => {
     const active = current === item.href.replace("./", "") ? "active" : "";
     const badge = navBadgeForHref(item.href);
-    return `<a class="nav-link ${active}" href="${item.href}"><span>${item.label}</span>${badge > 0 ? `<i class="nav-badge">+${badge}</i>` : ""}</a>`;
+    return `<a class="nav-link ${active}" href="${item.href}"><span>${t(item.labelKey)}</span>${badge > 0 ? `<i class="nav-badge">+${badge}</i>` : ""}</a>`;
   }).join("");
 
   nav.innerHTML = `
@@ -101,13 +120,33 @@ function toast(msg) {
 }
 
 function fmtNumber(num) {
-  return new Intl.NumberFormat("zh-CN").format(Number(num || 0));
+  const { language } = getUiPrefs();
+  return new Intl.NumberFormat(language).format(Number(num || 0));
+}
+
+function getUiPrefs() {
+  const ui = getCachedData()?.settings?.ui || {};
+  const language = UI_LANGUAGE_OPTIONS.has(String(ui.language || ""))
+    ? String(ui.language)
+    : UI_DEFAULTS.language;
+  const timezone = UI_TIMEZONE_OPTIONS.has(String(ui.timezone || ""))
+    ? String(ui.timezone)
+    : UI_DEFAULTS.timezone;
+  return { language, timezone };
+}
+
+function fmtDateTime(input, options = {}) {
+  if (input == null || input === "") return "-";
+  const dt = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(dt.getTime())) return String(input);
+  const { language, timezone } = getUiPrefs();
+  return dt.toLocaleString(language, { hour12: false, timeZone: timezone, ...options });
 }
 
 function showPageError(error, fallbackText = "页面初始化失败") {
   const page = document.querySelector(".page");
   if (!page) return;
-  const message = String(error?.message || fallbackText || "页面初始化失败");
+  const message = translateText(String(error?.message || fallbackText || "页面初始化失败"));
   let box = document.getElementById("pageErrorBanner");
   if (!box) {
     box = document.createElement("div");
@@ -116,17 +155,19 @@ function showPageError(error, fallbackText = "页面初始化失败") {
     page.prepend(box);
   }
   box.innerHTML = `
-    <strong>数据加载失败</strong>
+    <strong>${t("error.loadFailed", { msg: "" }).replace(/:\s*$/, "")}</strong>
     <span>${message}</span>
-    <span>请确认已执行 scripts/init_storage.py，并使用 app_server.py 启动服务。</span>
+    <span>scripts/init_storage.py / app_server.py</span>
   `;
-  toast(`加载失败: ${message}`);
+  toast(t("error.loadFailed", { msg: message }));
 }
 
 export {
   bindNovelSelector,
   clearNavBadge,
+  fmtDateTime,
   fmtNumber,
+  getUiPrefs,
   incrementNavBadge,
   renderNav,
   showPageError,

@@ -1,5 +1,6 @@
 import { getData, saveSettings } from "./store.js";
 import { renderNav, showPageError, toast } from "./ui.js";
+import { getLanguage, localizeDocumentText, t, translateText } from "./i18n.js";
 
 const providerDefaults = {
   grok: { baseUrl: "https://api.x.ai/v1", model: "grok-2-latest" },
@@ -11,49 +12,147 @@ const providerDefaults = {
 };
 
 const BATCH_CHAR_OPTIONS = new Set([3500, 4000, 5000, 6000, 7000]);
+const UI_LANGUAGE_OPTIONS = new Set(["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR"]);
+const UI_TIMEZONE_OPTIONS = new Set([
+  "Asia/Shanghai",
+  "Asia/Hong_Kong",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "America/New_York",
+  "America/Los_Angeles",
+  "Europe/London",
+  "Europe/Paris",
+  "Australia/Sydney",
+  "UTC",
+]);
+
+const TZ_LABELS = {
+  "Asia/Shanghai": {
+    "zh-CN": "北京时间 (Asia/Shanghai)",
+    "zh-TW": "北京時間 (Asia/Shanghai)",
+    "en-US": "Beijing Time (Asia/Shanghai)",
+    "ja-JP": "北京時間 (Asia/Shanghai)",
+    "ko-KR": "베이징 시간 (Asia/Shanghai)",
+  },
+  "Asia/Hong_Kong": {
+    "zh-CN": "香港时间 (Asia/Hong_Kong)",
+    "zh-TW": "香港時間 (Asia/Hong_Kong)",
+    "en-US": "Hong Kong Time (Asia/Hong_Kong)",
+    "ja-JP": "香港時間 (Asia/Hong_Kong)",
+    "ko-KR": "홍콩 시간 (Asia/Hong_Kong)",
+  },
+  "Asia/Tokyo": {
+    "zh-CN": "东京时间 (Asia/Tokyo)",
+    "zh-TW": "東京時間 (Asia/Tokyo)",
+    "en-US": "Tokyo Time (Asia/Tokyo)",
+    "ja-JP": "東京時間 (Asia/Tokyo)",
+    "ko-KR": "도쿄 시간 (Asia/Tokyo)",
+  },
+  "Asia/Seoul": {
+    "zh-CN": "首尔时间 (Asia/Seoul)",
+    "zh-TW": "首爾時間 (Asia/Seoul)",
+    "en-US": "Seoul Time (Asia/Seoul)",
+    "ja-JP": "ソウル時間 (Asia/Seoul)",
+    "ko-KR": "서울 시간 (Asia/Seoul)",
+  },
+  "America/New_York": {
+    "zh-CN": "纽约时间 (America/New_York)",
+    "zh-TW": "紐約時間 (America/New_York)",
+    "en-US": "New York Time (America/New_York)",
+    "ja-JP": "ニューヨーク時間 (America/New_York)",
+    "ko-KR": "뉴욕 시간 (America/New_York)",
+  },
+  "America/Los_Angeles": {
+    "zh-CN": "洛杉矶时间 (America/Los_Angeles)",
+    "zh-TW": "洛杉磯時間 (America/Los_Angeles)",
+    "en-US": "Los Angeles Time (America/Los_Angeles)",
+    "ja-JP": "ロサンゼルス時間 (America/Los_Angeles)",
+    "ko-KR": "로스앤젤레스 시간 (America/Los_Angeles)",
+  },
+  "Europe/London": {
+    "zh-CN": "伦敦时间 (Europe/London)",
+    "zh-TW": "倫敦時間 (Europe/London)",
+    "en-US": "London Time (Europe/London)",
+    "ja-JP": "ロンドン時間 (Europe/London)",
+    "ko-KR": "런던 시간 (Europe/London)",
+  },
+  "Europe/Paris": {
+    "zh-CN": "巴黎时间 (Europe/Paris)",
+    "zh-TW": "巴黎時間 (Europe/Paris)",
+    "en-US": "Paris Time (Europe/Paris)",
+    "ja-JP": "パリ時間 (Europe/Paris)",
+    "ko-KR": "파리 시간 (Europe/Paris)",
+  },
+  "Australia/Sydney": {
+    "zh-CN": "悉尼时间 (Australia/Sydney)",
+    "zh-TW": "雪梨時間 (Australia/Sydney)",
+    "en-US": "Sydney Time (Australia/Sydney)",
+    "ja-JP": "シドニー時間 (Australia/Sydney)",
+    "ko-KR": "시드니 시간 (Australia/Sydney)",
+  },
+  UTC: {
+    "zh-CN": "UTC (协调世界时)",
+    "zh-TW": "UTC (協調世界時)",
+    "en-US": "UTC (Coordinated Universal Time)",
+    "ja-JP": "UTC (協定世界時)",
+    "ko-KR": "UTC (협정 세계시)",
+  },
+};
+
+function applyTimezoneLabels() {
+  const lang = getLanguage();
+  const select = document.getElementById("uiTimezone");
+  if (!select) return;
+  Array.from(select.options).forEach((opt) => {
+    const table = TZ_LABELS[String(opt.value)];
+    if (!table) return;
+    opt.textContent = table[lang] || table["zh-CN"] || opt.textContent;
+  });
+}
 
 function friendlyErrorText(raw, type) {
   const msg = String(raw || "");
   const lower = msg.toLowerCase();
 
-  if (!msg) return "连接失败，请检查配置后重试";
+  if (!msg) return translateText("连接失败，请检查配置后重试");
   if (lower.includes("connection refused") || lower.includes("errno 61")) {
-    return type === "comfy"
+    return translateText(type === "comfy"
       ? "连接被拒绝，请确认 ComfyUI 已启动且地址正确"
-      : "连接被拒绝，请确认模型服务地址可访问";
+      : "连接被拒绝，请确认模型服务地址可访问");
   }
   if (lower.includes("timed out") || lower.includes("timeout")) {
-    return "请求超时，请检查网络或代理设置";
+    return translateText("请求超时，请检查网络或代理设置");
   }
   if (lower.includes("name or service not known") || lower.includes("nodename nor servname")) {
-    return "域名或地址无法解析，请检查 API Base URL";
+    return translateText("域名或地址无法解析，请检查 API Base URL");
   }
   if (lower.includes("api key") && lower.includes("不能为空")) {
-    return "请先填写 API Key 再测试";
+    return translateText("请先填写 API Key 再测试");
   }
   if (lower.includes("认证失败") || lower.includes("http 401") || lower.includes("http 403")) {
-    return "认证失败，请检查 API Key 是否正确";
+    return translateText("认证失败，请检查 API Key 是否正确");
   }
   if (lower.includes("http 404")) {
-    return "接口地址不可用，请检查 API Base URL";
+    return translateText("接口地址不可用，请检查 API Base URL");
   }
   if (lower.includes("http 429") || lower.includes("频率") || lower.includes("额度")) {
-    return "请求过于频繁或额度不足，请稍后重试";
+    return translateText("请求过于频繁或额度不足，请稍后重试");
   }
   if (lower.includes("http 5")) {
-    return "服务暂时不可用，请稍后重试";
+    return translateText("服务暂时不可用，请稍后重试");
   }
   if (type === "comfy" && lower.includes("system_stats")) {
-    return "连接成功，ComfyUI 接口可访问";
+    return translateText("连接成功，ComfyUI 接口可访问");
   }
   if (type === "llm" && lower.includes("模型接口可调用")) {
-    return "连接成功，模型可正常调用";
+    return translateText("连接成功，模型可正常调用");
   }
-  return msg.length > 60 ? `${msg.slice(0, 60)}...` : msg;
+  return translateText(msg.length > 60 ? `${msg.slice(0, 60)}...` : msg);
 }
 
 function load(settings) {
   const llm = settings.llm || {};
+  const ui = settings.ui || {};
   document.getElementById("comfyUrl").value = settings.comfyUrl || "";
   document.getElementById("proxyUrl").value = settings.proxyUrl || "";
   document.getElementById("llmProvider").value = llm.provider || "grok";
@@ -66,6 +165,12 @@ function load(settings) {
   document.getElementById("llmBatchChars").value = BATCH_CHAR_OPTIONS.has(batchChars)
     ? String(batchChars)
     : "3500";
+  document.getElementById("uiLanguage").value = UI_LANGUAGE_OPTIONS.has(String(ui.language || ""))
+    ? String(ui.language)
+    : "zh-CN";
+  document.getElementById("uiTimezone").value = UI_TIMEZONE_OPTIONS.has(String(ui.timezone || ""))
+    ? String(ui.timezone)
+    : "Asia/Shanghai";
 }
 
 function readSettingsForm() {
@@ -81,6 +186,10 @@ function readSettingsForm() {
       maxTokens: Number(document.getElementById("llmTokens").value),
       batchMaxChars: Number(document.getElementById("llmBatchChars").value || 3500),
     },
+    ui: {
+      language: document.getElementById("uiLanguage").value,
+      timezone: document.getElementById("uiTimezone").value,
+    },
   };
 }
 
@@ -90,7 +199,7 @@ function setTestResult(id, status, text) {
   el.classList.remove("ok", "fail");
   if (status === "ok") el.classList.add("ok");
   if (status === "fail") el.classList.add("fail");
-  el.textContent = text;
+  el.textContent = translateText(text);
 }
 
 async function testComfy() {
@@ -107,11 +216,13 @@ async function testComfy() {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
     setTestResult("testComfyResult", "ok", `可用 · ${friendlyErrorText(data.message || "连接成功", "comfy")}`);
-    toast("ComfyUI 连接正常");
+    localizeDocumentText(document);
+    toast(t("toast.saved"));
   } catch (err) {
     const text = friendlyErrorText(err.message, "comfy");
     setTestResult("testComfyResult", "fail", `失败 · ${text}`);
-    toast(`ComfyUI 测试失败：${text}`);
+    localizeDocumentText(document);
+    toast(t("error.operationFailed", { msg: text }));
   }
 }
 
@@ -129,20 +240,24 @@ async function testLlm() {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
     setTestResult("testLlmResult", "ok", `可用 · ${friendlyErrorText(data.message || "调用成功", "llm")}`);
-    toast("LLM 连接正常");
+    localizeDocumentText(document);
+    toast(t("toast.saved"));
   } catch (err) {
     const text = friendlyErrorText(err.message, "llm");
     setTestResult("testLlmResult", "fail", `失败 · ${text}`);
-    toast(`LLM 测试失败：${text}`);
+    localizeDocumentText(document);
+    toast(t("error.operationFailed", { msg: text }));
   }
 }
 
 function markComfyDirty() {
   setTestResult("testComfyResult", "", "未测试");
+  localizeDocumentText(document);
 }
 
 function markLlmDirty() {
   setTestResult("testLlmResult", "", "未测试");
+  localizeDocumentText(document);
 }
 
 function bindEvents() {
@@ -161,10 +276,15 @@ function bindEvents() {
   document.getElementById("llmTemperature").addEventListener("input", markLlmDirty);
   document.getElementById("llmTokens").addEventListener("input", markLlmDirty);
   document.getElementById("llmBatchChars").addEventListener("change", markLlmDirty);
+  document.getElementById("uiLanguage").addEventListener("change", markLlmDirty);
+  document.getElementById("uiTimezone").addEventListener("change", markLlmDirty);
 
   document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
     await saveSettings(readSettingsForm());
-    toast("配置已保存到数据库");
+    toast(t("toast.saved"));
+    localizeDocumentText(document);
+    applyTimezoneLabels();
+    renderNav();
   });
 
   document.getElementById("testComfyBtn").addEventListener("click", () => {
@@ -181,9 +301,11 @@ async function init() {
   bindEvents();
   const data = await getData();
   load(data.settings || {});
+  localizeDocumentText(document);
+  applyTimezoneLabels();
 }
 
 init().catch((err) => {
   renderNav();
-  showPageError(err, "系统配置页初始化失败");
+  showPageError(err, t("error.pageLoad"));
 });

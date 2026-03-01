@@ -1,5 +1,6 @@
-import { renderNav, showPageError, toast } from "./ui.js";
+import { fmtDateTime, renderNav, showPageError, toast } from "./ui.js";
 import { getActiveNovelId, getData } from "./store.js";
+import { localizeDocumentText, t } from "./i18n.js";
 
 let serviceRunning = false;
 let logTimer = null;
@@ -13,6 +14,7 @@ function renderServiceState() {
   statusEl.classList.toggle("online", serviceRunning);
   statusEl.classList.toggle("offline", !serviceRunning);
   toggleBtn.textContent = serviceRunning ? "结束服务" : "启动服务";
+  localizeDocumentText(document);
 }
 
 async function probeServer() {
@@ -54,7 +56,7 @@ async function fetchCaptureStatus() {
 async function toggleServiceByPage() {
   const server = document.getElementById("captureServer").value.trim();
   if (!server) {
-    toast("请先填写服务地址");
+    toast(t("error.operationFailed", { msg: "url required" }));
     return;
   }
   const endpoint = serviceRunning ? "/api/capture-service/stop" : "/api/capture-service/start";
@@ -316,10 +318,12 @@ function readParams() {
 
 function formatLogTime(value) {
   if (!value) return "-";
-  const s = String(value).replace(" ", "T");
+  const raw = String(value).trim();
+  const normalized = raw.includes("T") ? raw : raw.replace(" ", "T");
+  const s = /[zZ]|[+-]\d\d:?\d\d$/.test(normalized) ? normalized : `${normalized}Z`;
   const d = new Date(s);
   if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleString();
+  return fmtDateTime(d);
 }
 
 function renderCaptureLogs(logs) {
@@ -340,6 +344,7 @@ function renderCaptureLogs(logs) {
     `
     )
     .join("");
+  localizeDocumentText(document);
 }
 
 async function fetchCaptureLogs() {
@@ -384,7 +389,7 @@ async function copyScript() {
     window.setTimeout(() => {
       if (copyBtn) copyBtn.textContent = "复制代码";
     }, 1200);
-    toast("代码已复制");
+    toast(t("toast.copied"));
     return;
   }
   const ta = document.createElement("textarea");
@@ -398,7 +403,7 @@ async function copyScript() {
   window.setTimeout(() => {
     if (copyBtn) copyBtn.textContent = "复制代码";
   }, 1200);
-  toast("代码已复制");
+  toast(t("toast.copied"));
 }
 
 function bindEvents() {
@@ -419,7 +424,7 @@ function bindEvents() {
     el.addEventListener("change", onChanged);
   });
   document.getElementById("copyScriptBtn").addEventListener("click", () => {
-    copyScript().catch(() => toast("复制失败，请手动复制"));
+    copyScript().catch(() => toast(t("error.copyFailed", { msg: "manual copy" })));
   });
 
   document.getElementById("serviceToggleBtn").addEventListener("click", () => {
@@ -427,11 +432,11 @@ function bindEvents() {
       .then(async () => {
         await fetchCaptureStatus();
         const ok = await probeServer();
-        if (ok) toast("抓取服务已启动");
-        else toast("抓取服务已停止");
+        if (ok) toast(t("toast.created"));
+        else toast(t("common.close"));
       })
       .catch(() => {
-        toast("操作失败，请检查地址或端口占用");
+        toast(t("error.operationFailed", { msg: "network" }));
       });
   });
 }
@@ -445,6 +450,7 @@ async function init() {
   renderServiceState();
   await probeServer();
   await fetchCaptureLogs();
+  localizeDocumentText(document);
   if (logTimer) window.clearInterval(logTimer);
   logTimer = window.setInterval(() => {
     fetchCaptureLogs();
@@ -453,5 +459,5 @@ async function init() {
 
 init().catch((err) => {
   renderNav();
-  showPageError(err, "小说抓取页初始化失败");
+  showPageError(err, t("error.pageLoad"));
 });

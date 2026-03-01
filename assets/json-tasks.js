@@ -1,5 +1,10 @@
 import { deleteJsonTask, fetchJsonTaskDetail, getData, retryJsonTask } from "./store.js";
-import { clearNavBadge, fmtNumber, renderNav, showPageError, toast } from "./ui.js";
+import { clearNavBadge, fmtDateTime, fmtNumber, renderNav, showPageError, toast } from "./ui.js";
+import { localizeDocumentText, t } from "./i18n.js";
+
+function statusLabel(status) {
+  return t(`common.status.${status}`) || status;
+}
 
 let currentData = { novels: [], prompts: [], jsonTasks: [] };
 let refreshTimer = null;
@@ -21,7 +26,7 @@ function renderNovelSelector() {
 }
 
 function promptName(map, id) {
-  return map.get(String(id)) || "未绑定";
+  return map.get(String(id)) || "-";
 }
 
 function escapeHtml(text) {
@@ -43,7 +48,7 @@ function parseServerTime(value) {
 }
 
 function formatServerTime(value) {
-  return new Date(parseServerTime(value)).toLocaleString("zh-CN", { hour12: false });
+  return fmtDateTime(new Date(parseServerTime(value)));
 }
 
 function formatElapsedFrom(value) {
@@ -100,6 +105,7 @@ function render() {
   if (!list.length) {
     document.getElementById("jsonTaskList").innerHTML =
       '<article class="queue-card"><p class="meta">当前筛选条件下暂无任务，试试切换到“全部小说/全部状态”。</p></article>';
+    localizeDocumentText(document);
     return;
   }
 
@@ -109,25 +115,21 @@ function render() {
       <article class="queue-card">
         <div class="queue-head">
           <h3>#${fmtNumber(task.id)} · ${task.title}</h3>
-          <strong class="status ${task.status}">${task.status}</strong>
+          <strong class="status ${task.status}">${statusLabel(task.status)}</strong>
         </div>
         <p class="meta">${task.novelName || ""} · 章节 ${task.chapter} · 字数 ${fmtNumber(task.wordCount || 0)} · 提示词 ${promptName(promptMap, task.promptId)}${
           task.status === "running"
             ? ` · 已用时 <span data-elapsed-from="${task.updatedAt}">${formatElapsedFrom(task.updatedAt)}</span>`
             : ""
         } · 分批 ${fmtNumber(task.batchDone || 0)}/${fmtNumber(task.batchTotal || 0)} · 创建时间 ${formatServerTime(task.createdAt || task.updatedAt)} · 更新时间 ${formatServerTime(task.updatedAt)}</p>
-        ${
-          task.status === "failed" && task.errorMessage
-            ? `<p class="task-error">失败原因：${escapeHtml(task.errorMessage)}</p>`
-            : ""
-        }
+        ${task.status === "failed" && task.errorMessage ? `<p class="task-error">${escapeHtml(task.errorMessage)}</p>` : ""}
         ${
           task.status === "failed"
-            ? `<div class="card-actions"><button class="ghost-btn" data-task-action="retry" data-task-id="${task.id}">重试</button><button class="ghost-btn" data-task-action="delete" data-task-id="${task.id}">删除</button><button class="ghost-btn" data-task-action="batches" data-task-id="${task.id}">${taskDetails.has(
+            ? `<div class="card-actions"><button class="ghost-btn" data-task-action="retry" data-task-id="${task.id}">${t("common.retry")}</button><button class="ghost-btn" data-task-action="delete" data-task-id="${task.id}">${t("common.delete")}</button><button class="ghost-btn" data-task-action="batches" data-task-id="${task.id}">${taskDetails.has(
                 String(task.id)
               ) ? "收起批次" : "批次详情"}</button></div>`
             : task.status !== "running"
-              ? `<div class="card-actions"><button class="ghost-btn" data-task-action="delete" data-task-id="${task.id}">删除</button><button class="ghost-btn" data-task-action="batches" data-task-id="${task.id}">${taskDetails.has(
+              ? `<div class="card-actions"><button class="ghost-btn" data-task-action="delete" data-task-id="${task.id}">${t("common.delete")}</button><button class="ghost-btn" data-task-action="batches" data-task-id="${task.id}">${taskDetails.has(
                   String(task.id)
                 ) ? "收起批次" : "批次详情"}</button></div>`
               : `<div class="card-actions"><button class="ghost-btn" data-task-action="batches" data-task-id="${task.id}">${taskDetails.has(
@@ -146,6 +148,7 @@ function render() {
     el.addEventListener("click", () => onTaskAction(el.dataset.taskAction, el.dataset.taskId));
   });
   updateElapsedLabels();
+  localizeDocumentText(document);
 }
 
 async function onTaskAction(action, id) {
@@ -154,19 +157,19 @@ async function onTaskAction(action, id) {
   try {
     if (action === "retry") {
       await retryJsonTask(task.id);
-      toast("任务已重新加入队列");
+      toast(t("common.retry"));
       await reload();
       return;
     }
     if (action === "delete") {
       if (task.status === "running") {
-        toast("运行中任务不可删除");
+        toast(t("error.runningTaskNotDeletable"));
         return;
       }
-      if (!window.confirm(`确认删除任务「${task.title}」吗？`)) return;
+      if (!window.confirm(t("confirm.deleteTask", { title: task.title }))) return;
       await deleteJsonTask(task.id);
       taskDetails.delete(String(task.id));
-      toast("任务已删除");
+      toast(t("toast.deleted"));
       await reload();
       return;
     }
@@ -189,7 +192,7 @@ async function onTaskAction(action, id) {
       render();
     }
   } catch (err) {
-    toast(`操作失败: ${err.message}`);
+    toast(t("error.operationFailed", { msg: err.message }));
   }
 }
 
@@ -212,7 +215,7 @@ function bindEvents() {
   document.getElementById("taskStatusSelect").addEventListener("change", render);
   document.getElementById("refreshJsonTasksBtn").addEventListener("click", async () => {
     await reload();
-    toast("JSON任务已刷新");
+    toast(t("common.refresh"));
   });
 
   document.getElementById("jsonAutoRefreshSelect").addEventListener("change", applyAutoRefresh);
@@ -263,9 +266,10 @@ async function init() {
   initAutoRefresh();
   initClockTicker();
   await reload();
+  localizeDocumentText(document);
 }
 
 init().catch((err) => {
   renderNav();
-  showPageError(err, "JSON任务页初始化失败");
+  showPageError(err, t("error.pageLoad"));
 });

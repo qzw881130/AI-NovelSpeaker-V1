@@ -64,6 +64,38 @@
           <p class="caption">支持 Grok / DeepSeek / 千问 / Gemini / OpenAI / 自定义 API。</p>
         </section>
 
+        <section class="panel form-panel">
+          <h2>界面设置</h2>
+          <div class="form-grid">
+            <label>
+              语言设置
+              <select id="uiLanguage">
+                <option value="zh-CN">简体中文</option>
+                <option value="zh-TW">繁體中文</option>
+                <option value="en-US">English</option>
+                <option value="ja-JP">日本語</option>
+                <option value="ko-KR">한국어</option>
+              </select>
+            </label>
+            <label>
+              时区设置
+              <select id="uiTimezone">
+                <option value="Asia/Shanghai">北京时间 (Asia/Shanghai)</option>
+                <option value="Asia/Hong_Kong">香港时间 (Asia/Hong_Kong)</option>
+                <option value="Asia/Tokyo">东京时间 (Asia/Tokyo)</option>
+                <option value="Asia/Seoul">首尔时间 (Asia/Seoul)</option>
+                <option value="America/New_York">纽约时间 (America/New_York)</option>
+                <option value="America/Los_Angeles">洛杉矶时间 (America/Los_Angeles)</option>
+                <option value="Europe/London">伦敦时间 (Europe/London)</option>
+                <option value="Europe/Paris">巴黎时间 (Europe/Paris)</option>
+                <option value="Australia/Sydney">悉尼时间 (Australia/Sydney)</option>
+                <option value="UTC">UTC (协调世界时)</option>
+              </select>
+            </label>
+          </div>
+          <p class="caption">保存后影响任务列表等页面的时间显示格式与时区。</p>
+        </section>
+
         <section class="settings-actions-bottom">
           <button class="primary-btn" id="saveSettingsBtn" type="button">保存配置</button>
         </section>

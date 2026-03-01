@@ -323,6 +323,20 @@ def seed_core_data(conn: sqlite3.Connection) -> None:
         ON CONFLICT(setting_key) DO NOTHING
         """
     )
+    conn.execute(
+        """
+        INSERT INTO app_settings (setting_key,setting_value,updated_at)
+        VALUES ('ui_language', 'zh-CN', CURRENT_TIMESTAMP)
+        ON CONFLICT(setting_key) DO NOTHING
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO app_settings (setting_key,setting_value,updated_at)
+        VALUES ('ui_timezone', 'Asia/Shanghai', CURRENT_TIMESTAMP)
+        ON CONFLICT(setting_key) DO NOTHING
+        """
+    )
 
 
 def ensure_novel_dirs(conn: sqlite3.Connection) -> list[str]:

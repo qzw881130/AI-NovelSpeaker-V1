@@ -8,6 +8,7 @@ import {
   setActiveNovelId,
 } from "./store.js";
 import { fmtNumber, renderNav, showPageError, toast } from "./ui.js";
+import { localizeDocumentText, t } from "./i18n.js";
 
 let editingId = "";
 let refreshTimer = null;
@@ -51,7 +52,7 @@ function renderNovelCards() {
     .map(
       (n) => `
       <article class="novel-card">
-        <button class="ghost-btn novel-delete-btn" data-action="delete" data-id="${n.id}" title="删除小说" aria-label="删除小说" type="button">🗑</button>
+        <button class="ghost-btn novel-delete-btn" data-action="delete" data-id="${n.id}" title="删除小说" aria-label="删除小说" type="button">✕</button>
         <div class="novel-card-head"><div class="novel-title-row"><h3>${n.name}</h3><button class="ghost-btn novel-edit-btn" data-action="edit" data-id="${n.id}" title="编辑小说" aria-label="编辑小说" type="button">✎</button></div><p class="meta">${n.author}</p></div>
         <p class="novel-intro" title="${n.intro || ""}">${n.intro || ""}</p>
         <div class="chips">
@@ -75,6 +76,7 @@ function renderNovelCards() {
   document.querySelectorAll("[data-action]").forEach((btn) => {
     btn.addEventListener("click", () => onNovelAction(btn.dataset.action, btn.dataset.id));
   });
+  localizeDocumentText(document);
 }
 
 function renderStorageTable(data) {
@@ -90,6 +92,7 @@ function renderStorageTable(data) {
     )
     .join("");
   document.getElementById("storageTable").innerHTML = `<div class="storage-row head"><span>小说</span><span>txt</span><span>音频</span></div>${rows}`;
+  localizeDocumentText(document);
 }
 
 function openNovelModal(novel) {
@@ -111,6 +114,7 @@ function openNovelModal(novel) {
   form.intro.value = novel?.intro || "";
   form.promptId.value = novel?.promptId || currentData.prompts[0]?.id || "";
   form.workflowId.value = novel?.workflowId || currentData.workflows[0]?.id || "";
+  localizeDocumentText(document);
   modal.showModal();
 }
 
@@ -125,20 +129,20 @@ async function onNovelAction(action, id) {
     if (action === "edit") openNovelModal(novel);
     if (action === "download") {
       await downloadNovelBundle(id);
-      toast("已生成打包清单并下载");
+      toast(t("toast.created"));
     }
     if (action === "chapters") {
       setActiveNovelId(id);
       window.location.href = `./chapters.html?novelId=${encodeURIComponent(id)}`;
     }
     if (action === "delete") {
-      if (!window.confirm(`确认删除小说《${novel.name}》及相关任务吗？`)) return;
+      if (!window.confirm(t("confirm.deleteNovel", { name: novel.name }))) return;
       await deleteNovel(id);
-      toast("已删除小说");
+      toast(t("toast.deleted"));
       await refresh();
     }
   } catch (err) {
-    toast(`操作失败: ${err.message}`);
+    toast(t("error.operationFailed", { msg: err.message }));
   }
 }
 
@@ -190,7 +194,7 @@ function bindEvents() {
     const form = event.currentTarget;
     const englishDir = String(form.englishDir.value || "").trim();
     if (!isValidEnglishDir(englishDir)) {
-      toast("英文目录仅允许英文/数字/下划线，且不超过25字符");
+      toast(t("error.invalidEnglishDir"));
       form.englishDir.focus();
       return;
     }
@@ -207,10 +211,10 @@ function bindEvents() {
         editingId
       );
       closeNovelModal();
-      toast(editingId ? "小说已更新" : "小说已创建");
+      toast(editingId ? t("toast.updated") : t("toast.created"));
       await refresh();
     } catch (err) {
-      toast(`保存失败: ${err.message}`);
+      toast(t("error.saveFailed", { msg: err.message }));
     }
   });
 }
@@ -219,10 +223,11 @@ async function init() {
   renderNav();
   bindEvents();
   await refresh();
+  localizeDocumentText(document);
   initAutoRefresh();
 }
 
 init().catch((err) => {
   renderNav();
-  showPageError(err, "小说管理页初始化失败");
+  showPageError(err, t("error.pageLoad"));
 });

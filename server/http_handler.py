@@ -1271,12 +1271,35 @@ class Handler(BaseHTTPRequestHandler):
 
         if route == "/api/settings":
             llm = body.get("llm") or {}
+            ui = body.get("ui") or {}
             try:
                 batch_max_chars = int(llm.get("batchMaxChars") or 3500)
             except (TypeError, ValueError):
                 batch_max_chars = 3500
             if batch_max_chars not in {3500, 4000, 5000, 6000, 7000}:
                 batch_max_chars = 3500
+
+            ui_language = str(ui.get("language") or "zh-CN").strip() or "zh-CN"
+            if ui_language not in {"zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR"}:
+                ui_language = "zh-CN"
+
+            ui_timezone = (
+                str(ui.get("timezone") or "Asia/Shanghai").strip() or "Asia/Shanghai"
+            )
+            if ui_timezone not in {
+                "Asia/Shanghai",
+                "Asia/Hong_Kong",
+                "Asia/Tokyo",
+                "Asia/Seoul",
+                "America/New_York",
+                "America/Los_Angeles",
+                "Europe/London",
+                "Europe/Paris",
+                "Australia/Sydney",
+                "UTC",
+            }:
+                ui_timezone = "Asia/Shanghai"
+
             pairs = {
                 "comfy_url": str(body.get("comfyUrl") or ""),
                 "proxy_url": str(body.get("proxyUrl") or ""),
@@ -1287,6 +1310,8 @@ class Handler(BaseHTTPRequestHandler):
                 "llm_temperature": str(llm.get("temperature") or 0.3),
                 "llm_max_tokens": str(llm.get("maxTokens") or 8192),
                 "llm_batch_max_chars": str(batch_max_chars),
+                "ui_language": ui_language,
+                "ui_timezone": ui_timezone,
             }
             conn = db_conn()
             for k, v in pairs.items():
