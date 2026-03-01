@@ -21,7 +21,7 @@ function render() {
       (w) => `
       <article class="asset-card">
         <div class="queue-head">
-          <h3>${w.name}</h3>
+          <h3>${translateText(w.name)}</h3>
           <span class="chip ${w.type === "system" ? "pending" : "completed"}">${w.type === "system" ? "系统" : "用户"}</span>
         </div>
         <p class="meta">${translateText(w.description || "-")}</p>
@@ -57,8 +57,8 @@ function openModal(item, mode = "create") {
   document.getElementById("workflowModalTitle").textContent =
     mode === "view" ? "查看系统工作流" : editingId ? "编辑工作流" : "创建工作流";
   const form = document.getElementById("workflowForm");
-  form.name.value = item?.name || "";
-  form.description.value = item?.description || "";
+  form.name.value = mode === "view" ? translateText(item?.name || "") : item?.name || "";
+  form.description.value = mode === "view" ? translateText(item?.description || "") : item?.description || "";
   form.jsonText.value = item?.jsonText || '{"workflow":""}';
   setFormReadonly(mode === "view");
   localizeDocumentText(document);

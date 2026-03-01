@@ -21,7 +21,7 @@ function render() {
       (p) => `
       <article class="asset-card">
         <div class="queue-head">
-          <h3>${p.name}</h3>
+          <h3>${translateText(p.name)}</h3>
           <span class="chip ${p.type === "system" ? "pending" : "completed"}">${p.type === "system" ? "系统" : "用户"}</span>
         </div>
         <p class="meta">${translateText(p.description || "-")}</p>
@@ -57,8 +57,8 @@ function openModal(promptItem, mode = "create") {
   document.getElementById("promptModalTitle").textContent =
     mode === "view" ? "查看系统提示词" : editingId ? "编辑提示词" : "新建提示词";
   const form = document.getElementById("promptForm");
-  form.name.value = promptItem?.name || "";
-  form.description.value = promptItem?.description || "";
+  form.name.value = mode === "view" ? translateText(promptItem?.name || "") : promptItem?.name || "";
+  form.description.value = mode === "view" ? translateText(promptItem?.description || "") : promptItem?.description || "";
   form.content.value = promptItem?.content || "";
   setFormReadonly(mode === "view");
   localizeDocumentText(document);
