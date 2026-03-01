@@ -46,18 +46,6 @@ echo   - Local: http://127.0.0.1:%PORT%/index.html
 
 set "LAN_PRINTED=0"
 
-where powershell >nul 2>&1
-if %errorlevel%==0 (
-  for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue ^| Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } ^| Select-Object -ExpandProperty IPAddress -Unique"`) do (
-    set "IP=%%I"
-    set "IP=!IP: =!"
-    if not "!IP!"=="" (
-      echo   - LAN  : http://!IP!:%PORT%/index.html
-      set "LAN_PRINTED=1"
-    )
-  )
-)
-
 if "%LAN_PRINTED%"=="0" (
   for /f "tokens=2 delims=:" %%A in ('ipconfig ^| findstr /C:"IPv4"') do (
     set "IP=%%A"
