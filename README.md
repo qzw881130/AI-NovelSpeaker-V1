@@ -121,10 +121,10 @@ python3 app_server.py
 
 | 插件（第三方） | 仓库 | 本项目工作流使用到的节点 |
 | --- | --- | --- |
-| ComfyUI-TD-Qwen3TTS | `AICoderTudou/ComfyUI-TD-Qwen3TTS` | `TDQwen3TTSModelLoader`、`TDParseJson`、`TDQwen3TTSBatchGenerateSpeaker`、`TDQwen3TTSMultiDialog` |
-| comfyui-various | `jamesWalker55/comfyui-various` | `JWString` |
-| ComfyUI_Comfyroll_CustomNodes | `Suzie1/ComfyUI_Comfyroll_CustomNodes` | `CR Text` |
-| Comfyui-Memory_Cleanup | `LAOGOU-666/Comfyui-Memory_Cleanup` | `RAMCleanup`、`VRAMCleanup` |
+| ComfyUI-TD-Qwen3TTS | [AICoderTudou/ComfyUI-TD-Qwen3TTS](https://github.com/AICoderTudou/ComfyUI-TD-Qwen3TTS) | `TDQwen3TTSModelLoader`、`TDParseJson`、`TDQwen3TTSBatchGenerateSpeaker`、`TDQwen3TTSMultiDialog` |
+| comfyui-various | [jamesWalker55/comfyui-various](https://github.com/jamesWalker55/comfyui-various) | `JWString` |
+| ComfyUI_Comfyroll_CustomNodes | [Suzie1/ComfyUI_Comfyroll_CustomNodes](https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes) | `CR Text` |
+| Comfyui-Memory_Cleanup | [LAOGOU-666/Comfyui-Memory_Cleanup](https://github.com/LAOGOU-666/Comfyui-Memory_Cleanup) | `RAMCleanup`、`VRAMCleanup` |
 
 ### 需要的 TTS 模型（按当前工作流）
 
