@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-TW.md) | [English](README.en-US.md) | [日本語](README.ja-JP.md) | [한국어](README.ko-KR.md)
 
-ローカル優先の複数小説管理 + 音声生成ツール（SQLite + ローカルファイル保存 + ComfyUI + LLM）。
+複数小説管理 + 音声生成ツール（SQLite + ローカルファイル保存 + ComfyUI + LLM）。
 
 ## 機能
 
@@ -31,6 +31,14 @@
 
 - Python 3.10+（推奨 3.11/3.12/3.13）
 - 任意：ComfyUI（音声生成に使用）
+
+### リポジトリ取得
+
+```bash
+git clone git@github.com:qzw881130/AI-NovelSpeaker-V1.git
+# または: git clone https://github.com/qzw881130/AI-NovelSpeaker-V1.git
+cd AI-NovelSpeaker-V1
+```
 
 ### macOS / Linux
 

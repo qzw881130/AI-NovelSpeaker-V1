@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-TW.md) | [English](README.en-US.md) | [日本語](README.ja-JP.md) | [한국어](README.ko-KR.md)
 
-로컬 우선 다중 소설 관리 + 오디오 생성 도구입니다 (SQLite + 로컬 파일 저장 + ComfyUI + LLM).
+다중 소설 관리 + 오디오 생성 도구입니다 (SQLite + 로컬 파일 저장 + ComfyUI + LLM).
 
 ## 주요 기능
 
@@ -31,6 +31,14 @@
 
 - Python 3.10+ (권장 3.11/3.12/3.13)
 - 선택: ComfyUI (오디오 생성용)
+
+### 저장소 클론
+
+```bash
+git clone git@github.com:qzw881130/AI-NovelSpeaker-V1.git
+# 또는: git clone https://github.com/qzw881130/AI-NovelSpeaker-V1.git
+cd AI-NovelSpeaker-V1
+```
 
 ### macOS / Linux
 

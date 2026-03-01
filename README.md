@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-TW.md) | [English](README.en-US.md) | [日本語](README.ja-JP.md) | [한국어](README.ko-KR.md)
 
-本地优先的多小说管理与有声生成工具（SQLite + 本地文件存储 + ComfyUI + LLM）。
+多小说管理与有声生成工具（SQLite + 本地文件存储 + ComfyUI + LLM）。
 
 ## 功能概览
 
@@ -31,6 +31,14 @@
 
 - Python 3.10+（建议 3.11/3.12/3.13）
 - 可选：ComfyUI（用于音频生成）
+
+### 获取代码
+
+```bash
+git clone git@github.com:qzw881130/AI-NovelSpeaker-V1.git
+# 或者: git clone https://github.com/qzw881130/AI-NovelSpeaker-V1.git
+cd AI-NovelSpeaker-V1
+```
 
 ### macOS / Linux
 

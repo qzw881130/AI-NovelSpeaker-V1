@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-TW.md) | [English](README.en-US.md) | [日本語](README.ja-JP.md) | [한국어](README.ko-KR.md)
 
-Local-first multi-novel management and audio generation toolkit (SQLite + local file storage + ComfyUI + LLM).
+Multi-novel management and audio generation toolkit (SQLite + local file storage + ComfyUI + LLM).
 
 ## Features
 
@@ -31,6 +31,14 @@ Local-first multi-novel management and audio generation toolkit (SQLite + local 
 
 - Python 3.10+ (3.11/3.12/3.13 recommended)
 - Optional: ComfyUI (for audio generation)
+
+### Clone Repository
+
+```bash
+git clone git@github.com:qzw881130/AI-NovelSpeaker-V1.git
+# or: git clone https://github.com/qzw881130/AI-NovelSpeaker-V1.git
+cd AI-NovelSpeaker-V1
+```
 
 ### macOS / Linux
 
