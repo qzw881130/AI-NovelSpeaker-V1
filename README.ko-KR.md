@@ -4,6 +4,11 @@
 
 다중 소설 관리 + 오디오 생성 도구입니다 (SQLite + 로컬 파일 저장 + ComfyUI + LLM).
 
+## 영상 소개
+
+- Bilibili: https://www.bilibili.com/video/BV1vXP3znEAT
+- YouTube: https://youtu.be/FI28PpHUGAY
+
 ## 주요 기능
 
 - 소설 관리: 생성/편집/삭제, 통계, ZIP 번들 다운로드

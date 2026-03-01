@@ -4,6 +4,11 @@
 
 Multi-novel management and audio generation toolkit (SQLite + local file storage + ComfyUI + LLM).
 
+## Video Introduction
+
+- Bilibili: https://www.bilibili.com/video/BV1vXP3znEAT
+- YouTube: https://youtu.be/FI28PpHUGAY
+
 ## Features
 
 - Novel management: create/edit/delete, statistics, ZIP bundle export

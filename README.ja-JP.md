@@ -4,6 +4,11 @@
 
 複数小説管理 + 音声生成ツール（SQLite + ローカルファイル保存 + ComfyUI + LLM）。
 
+## 動画紹介
+
+- Bilibili：https://www.bilibili.com/video/BV1vXP3znEAT
+- YouTube：https://youtu.be/FI28PpHUGAY
+
 ## 機能
 
 - 小説管理：作成/編集/削除、統計、ZIP バンドル出力

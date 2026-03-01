@@ -4,6 +4,11 @@
 
 多小说管理与有声生成工具（SQLite + 本地文件存储 + ComfyUI + LLM）。
 
+## 视频介绍
+
+- B站：https://www.bilibili.com/video/BV1vXP3znEAT
+- YouTube：https://youtu.be/FI28PpHUGAY
+
 ## 功能概览
 
 - 小说管理：创建/编辑/删除、统计、打包下载（真实 ZIP）
